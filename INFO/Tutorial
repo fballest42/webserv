@@ -1,0 +1,30 @@
+to create sockets class
+Servidor web C++ desde cero:: objeto socket Eric O Meehan
+
+
+
+CO650 W11 C++ Network Programming Part 1: sockets
+https://www.youtube.com/watch?v=gntyAFoZp-E&t=0s
+
+CO650 W12 C++ Network Programming Part 2: TCP & UDP
+https://www.youtube.com/watch?v=sXW_sNGvqcU
+
+https://medium.com/from-the-scratch/http-server-what-do-you-need-to-know-to-build-a-simple-http-server-from-scratch-d1ef8945e4fa
+
+
+C++ Web Server from Scratch | Part 1: Creating a Socket Object
+https://www.youtube.com/watch?v=YwHErWJIh6Y&t=1227s
+
+
+epoll and 
+epoll and Set Non-blocking
+
+https://blog.varunajayasiri.com/epoll.html
+https://stackoverflow.com/questions/66916835/c-confused-by-epoll-and-socket-fd-on-linux-systems-and-async-threads
+github onestraw/epoll-example
+
+tutorialspoint.com/cplusplus/cpp_web_programming.htm
+
+github.com/cclaude42/webserv
+
+https://beej.us/guide/bgnet/html/#two-types-of-internet-sockets
