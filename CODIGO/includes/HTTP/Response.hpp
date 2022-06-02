@@ -24,9 +24,11 @@ class Response
         std::string _version;
         std::string _status;
         std::string _contentType;
+        int _contentLength;
+        std::string _charset;
         std::string _location;
-        std::string _contentLength;
-        std::string _response;
+  
+        std::string _response;                  //salida final
         std::string _header;
         std::string _body;
         //std::vector<std::string>    _setCookies;
@@ -37,6 +39,6 @@ class Response
         void initResponse();
         void setHeader();
         void setResponse();
-        void sendResponse(int socket);
+        int sendResponse(int socket);
 };
 #endif

@@ -18,6 +18,7 @@ std::string Error_page::get_error_page(int error_type){
     
     if (_error_pages.count(error_type)==0)
         error_type = 999;
+    //std::string header = "HTTP/1.0 200 OK\r\nContent-Length: 11\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n";
     std::string m_body = "<html>\n";
     m_body += "<head>\n";
     m_body += "<link rel=\"shortcut icon\" href=\"data:image/x-icon;,\" type=\"image/x-icon\"><meta charset=\"UTF-8\">\n";

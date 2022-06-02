@@ -15,14 +15,16 @@ Request::~Request() {}
 int Request::parse(std::string &buffer) 
 {
   size_t ret = 0;
-
   gettimeofday(&last_timer_, NULL);
   //std::cout << "nnn"  << std::endl;
   _buffer += buffer;
   buffer.clear();
-  ret = method_line();
-  ret = headers();
-  ret = body();
+  if ((ret = method_line()) > 0)
+    return ret;
+  if ((ret = headers()) > 0)
+    return ret;
+  if ((ret = body()) > 0)
+    return ret;
   /*
   if (status_ == FIRST_LINE)
     ret = method_line();
@@ -34,7 +36,7 @@ int Request::parse(std::string &buffer)
     ret = body();
   if (status_ == CHUNK)
     ret = chunk();
-  if (statu,s_ == COMPLETE || ret == 1) {
+  if (status_ == COMPLETE || ret == 1) {
     status_ = COMPLETE;
     return ret;
   }

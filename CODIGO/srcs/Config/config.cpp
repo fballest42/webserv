@@ -2,7 +2,7 @@
 
 Config::Config(std::vector<std::string> vector_cfg):  _vector_cfg(vector_cfg)
 {
-    _ports.push_back(80);
+    _ports.push_back(80);   ///error.... 
     _autoindex.push_back("off");
     
 }

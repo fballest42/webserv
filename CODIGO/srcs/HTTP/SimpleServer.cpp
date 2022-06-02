@@ -1,7 +1,9 @@
 #include "SimpleServer.hpp"
 //#include "Request.hpp"
+
 extern Logger log;
 extern Error_page err_page;
+
 //Constructor 
 SimpleServer::SimpleServer(int domain, int service, int protocol, int port, u_long interface)
 {
@@ -58,7 +60,7 @@ void SimpleServer::launch(void)
      int fdmin;        // maximum file descriptor number
      int client_socket;
      int nbytes;
-     char *hello = "Hello from server";
+     
      //setNonBlockingFD(_server_socket);//Not blocking socket of server
      
     FD_ZERO(&master);    // clear the master sets
@@ -74,16 +76,16 @@ void SimpleServer::launch(void)
     {
         read_fds = master; // copy master to read_fs
         log.print(INFO,"waiting for connections",GREEN,true);
-        if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
+        if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {  // Select wait to something happens (new client connect, old client connect, close connected cliente)
             perror("select");
             exit(4);
         }
         // run through the existing connections looking for data to read
         for(i = 0 ; i <= fdmax; i++)
         {
-            if (FD_ISSET(i, &read_fds)) { // we got one!!
-                if (i == _server_socket) { // handle new connections
-                    if ((client_socket = accept(_server_socket, (struct sockaddr *)&_address, (socklen_t*)&_addresslen))<0)
+            if (FD_ISSET(i, &read_fds)) { // we got one!! /* Un nuevo cliente solicita conexión. Aceptarla aquí. En el ejemplo, se acepta la conexión, se mete el descriptor en socketCliente[] y se envía al cliente su posición en el array como número de cliente. */
+                if (i == _server_socket) { // handle new connections, it is a new connection
+                    if ((client_socket = accept(_server_socket, (struct sockaddr *)&_address, (socklen_t*)&_addresslen))<0) 
                     {
                         perror("Error accepting connection");
                         exit(EXIT_FAILURE);
@@ -91,7 +93,7 @@ void SimpleServer::launch(void)
                     else 
                     {
                         std::cout << "new socket" << client_socket << std::endl;
-                        FD_SET(client_socket, &master); // add to master
+                        FD_SET(client_socket, &master); // add new clsocket client to master
                         if (client_socket > fdmax) {    // keep track of the max sockets
                             fdmax = client_socket;
                         }
@@ -106,8 +108,8 @@ void SimpleServer::launch(void)
                     }
                 } 
                 else 
-                {   // handle data from a client
-                    if ((nbytes = recv(i, _buffer, sizeof _buffer, 0)) <= 0) 
+                {   // handle data from a old client
+                    if ((nbytes = recv(i, _buffer, sizeof _buffer, 0)) <= 0)  /* Hay un error en la lectura. Posiblemente el cliente ha cerrado la conexión. Hacer aquí el tratamiento. En el ejemplo, se cierra el socket y se elimina del array de socketCliente[] */
                     {   // got error or connection closed by client
                         if (nbytes == 0) {
                             // connection closed
@@ -117,42 +119,30 @@ void SimpleServer::launch(void)
                         }
                         close(i); // bye!
                         log.print(INFO,"Connection closed",GREEN,true);
-                        FD_CLR(i, &master); // remove from master set
+                        FD_CLR(i, &master); // remove socket from master set
                     } 
                     else
-                    {   // we got some data from a client
+                    {   // we got some data from a client  /* Se ha leido un dato del cliente correctamente. Hacer aquí el tratamiento para ese mensaje. En el ejemplo, se lee y se escribe en pantalla. */
                         std::cout << _buffer << std::endl;
-                        char *hello = "Hello from the server";//IMPORTANT! WE WILL GET TO IT
-                        //write(i , hello , strlen(hello));
-                        //std::string m_body = err_page.get_error_page(505);
-                        //write(i, m_body.c_str(), m_body.length());
-                        //send(i, m_body.c_str(), m_body.length(), 0);
-                        log.print(INFO,"Connection closed",GREEN,true);
                         
-                        for(j = 0; j <= fdmax; j++) {
-                            // send to everyone!
-                            std::cout << "sending" << std::endl;
-                            if (FD_ISSET(j, &master)) {
-                                // except the listener and ourselves
-                                if (j != _server_socket && j != i) {
-                                    //if (send(j, _buffer, nbytes, 0) == -1) {
-                                    if (write(i , hello , strlen(hello)) == -1) {
-                                        perror("send");
-                                    }
-                                }
+                        // Checking the request
+                        Request newrequest;
+                        std::string result_string(_buffer);
+                        int result = newrequest.parse(result_string);  //compruebo request 
+                        log.print(INFO,"Response check:" + std::to_string(result),RED,true);
+
+                        char *hello = "HTTP/1.0 200 OK\r\nContent-Length: 11\r\nContent-Type: text/html; charset=UTF-8\r\n\r\nHello World\r\n";//IMPORTANT! WE WILL GET TO IT
+   
+                        if (FD_ISSET(i, &master)) { 
+                            Response newresponse;
+                            if (newresponse.sendResponse(i) == -1) {
+                                perror("send");
                             }
-                        }
-                        
+                            log.print(INFO,"Response sent",GREEN,true);    
+                        }       
+                                               
                     }
                 } // END handle data from client
-
-            //log.print(INFO,"Server waiting for new connetions ---",RED,true);
-            //write(_server_socket, "GET / HTTP/1.1\r\nHost: www.42.fr\r\n\r\n", strlen("GET / HTTP/1.1\r\nHost: www.42.fr\r\n\r\n"));
-        
-            // accepter();
-
-
-            //log.print(INFO,"New connection on", GREEN);
             
             //setNonBlockingFD(_server_socket);//Not blocking socket of server
             //setNonBlockingFD(client_socket);
