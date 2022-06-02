@@ -1,8 +1,6 @@
 to create sockets class
 Servidor web C++ desde cero:: objeto socket Eric O Meehan
 
-
-
 CO650 W11 C++ Network Programming Part 1: sockets
 https://www.youtube.com/watch?v=gntyAFoZp-E&t=0s
 
@@ -28,3 +26,29 @@ tutorialspoint.com/cplusplus/cpp_web_programming.htm
 github.com/cclaude42/webserv
 
 https://beej.us/guide/bgnet/html/#two-types-of-internet-sockets
+
+
+directivas validas
+workers workers_numbers; //sets a number of worker thread
+
+listen address[:port]; ó port;   //bing the given addres to the port. 
+    if no addreess is given binds 0.0.0.0. 
+    if no port, binds to 80.
+
+server_name name ...; //sets names of a virtual server
+
+root path;  //sets the directory for requests.
+
+auth login:password; //restricts a route for a user.
+
+error_page code ... uri; //defines the URI that will be shown for the specified errors.
+
+upload
+
+autoindex on|off; (default off) //enables or disables the directory listing out`put
+
+index file ....;    //defines file that will be used as an index
+
+cgi extension cgi_path;     //defines files that will be executed for given extension
+
+cgi_bin folder_path; (default ./cgi-bin)    //define a folder where to search CGI binaries

@@ -5,9 +5,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "SimpleSocket.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 #include <unistd.h>
-#include <fcntl.h>
 #include <arpa/inet.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <iostream>
+#include "logger.hpp"
+
+//Logger log;
+
 //#include <sys/epoll.h>
 
 #define exit_if(r, ...)                                                                          \
@@ -17,8 +26,8 @@
         exit(1);                                                                                 \
     }
 
-namespace WEB
-{
+//namespace WEB
+//{
     class SimpleServer
     {
         private:
@@ -36,7 +45,6 @@ namespace WEB
             // Constructor
             SimpleServer(int domain, int service, int protocol, int port, u_long interface);           
             
-            void start_listening(void);
             void launch(void);
 
             void test_binding(int item_to_test);
@@ -45,7 +53,8 @@ namespace WEB
             //getter
             int get_port(){return (_port);};
             u_long get_interface(){return(_interface);};
+            int get_listener(){return (_listening);};
             int get_socket(){return (_server_socket);};
     };
-}
+//}
 #endif

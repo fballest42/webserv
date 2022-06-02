@@ -5,11 +5,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <iostream>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <iostream>
+#include <fcntl.h>
 
 
-
-namespace WEB
-{
+//namespace WEB
+//{
     class SimpleSocket
     {
         private:
@@ -22,10 +26,10 @@ namespace WEB
             
             //Getters
             int get_sock(){ return _sock;};
-
+            void setNonBlockingFD(int fd);
             void test_socket(int item_to_test);
 
     };
-} // namespace web
+//} // namespace web
 
 #endif

@@ -1,15 +1,4 @@
-#pragma once
-
-
-# ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 128
-# endif
-
-# include <stdlib.h>
-# include <unistd.h>
-# include <string.h>
-
-int		get_next_line(int fd, char **line);
+#include "get_next_line.hpp"
 
 void	*ft_calloc(size_t count, size_t size)
 {
