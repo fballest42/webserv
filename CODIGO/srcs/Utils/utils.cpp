@@ -19,12 +19,12 @@ void strip(const std::string& in, std::string& out)
 }
 
 // Give the number of tokens split with delimiter string
-int nb_tokens(std::string str, std::string delimiter)
+int nb_tokens(std::string str, char delimiter)
 {
     std::istringstream iss(str);
     std::string token;
     int ret=0;
-    while (std::getline(iss, token, ' '))
+    while (std::getline(iss, token, delimiter))
     {
         ret++;
     }
@@ -32,12 +32,12 @@ int nb_tokens(std::string str, std::string delimiter)
 }
 
 // Give the token in nb position split with delimiter string
-std::string  get_token(std::string str, std::string delimiter, int nb)
+std::string  get_token(std::string str, char delimiter, int nb)
 {
     std::istringstream iss(str);
     std::string token;
     int ret=0;
-    while (std::getline(iss, token, ' '))
+    while (std::getline(iss, token, delimiter))
     {
         //std::cout << token << std::endl;
         if (ret == nb)

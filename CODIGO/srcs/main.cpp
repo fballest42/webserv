@@ -9,9 +9,30 @@
 #include "SimpleSocket.hpp"
 #include "SimpleServer.hpp"
 #include "Request.hpp"
+//#include "Cgi.hpp"
+#include "file.hpp"
+#include <thread>
+#include <string>
 
 Logger log;
 Error_page err_page;
+pthread_mutex_t g_write;
+
+//Structure for passing arguments to threads
+struct Server {
+    int         _id;
+    Config      _conf;
+    pthread_t   _thr;
+};
+
+std::vector<Server> g_servers;
+
+void *start_server(void *arg)
+{
+    SimpleServer myserver(AF_INET, SOCK_STREAM, IPPROTO_TCP,  ((Server*)arg)->_conf, INADDR_ANY);
+    //myserver.launch();
+    return NULL;
+}
 
 int main(int argc, char **argv)
 {
@@ -21,7 +42,7 @@ int main(int argc, char **argv)
 
     if (myoptions.parse())
     {
-        std::cout << "FdAIL:" << std::endl;
+        std::cout << "FAIL:" << std::endl;
         std::cout << myoptions.helpText() << std::endl;
         return(0);
     }
@@ -31,116 +52,32 @@ int main(int argc, char **argv)
         return (0);
     }
 
-    //std::cout << 
-    //return (0);
-    Parse_config nbserver(myoptions.get_path());
-    if (!nbserver.parse())
+    log.print(INFO,"------------------------------ PARSE OPTIONS DONE ---------------------------------- ",YELLOW,true);
+    
+    // Verify correct config file
+    Parse_config my_cluster(myoptions.get_path());
+    if (!my_cluster.parse())
     {
         std::cout << "\nError en config:" << std::endl;
         return(0);
     }
-        
-    //return (0);
     
-    std::cout << "Servidores:" << nbserver.get_nb_servers() << std::endl;
-    //nbserver.show_config();
-    //return (0);
+    log.print(INFO,"------------------------------ "+ std::to_string(my_cluster.get_nb_servers())  + ": SERVERS DETECTED ---------------------------------- ",YELLOW,true);
+    std::cout << my_cluster.get_nb_servers() << " servers detected." << std::endl;
+
+    // show each config raw data
     int c = 0;
-    while (c < nbserver.get_nb_servers())
-     {   
-        std::cout << "\nServidor:" << c << std::endl;
-        nbserver.show_config_one(c);
+    while (c < my_cluster.get_nb_servers())
+    {   
+        log.print(INFO,"Servidor:" + std::to_string(c),GREEN,true);
+        my_cluster.show_config_one(c);
         c++;
-     }
-
-    //nbserver._configuration.at(1).show_ports();
-
-    log.print(INFO,"KKK",RED,true);
-    log.print(DEBUG,"KKK",BLUE,true);
-    
-    
-    /*
-    std::cout << "\nServidor:" << 2 << std::endl;
-    nbserver.show_config_one(1);
-    */
-    
-    //return(0);
-    
-    /*
-    Config cfg(argv[1]);
-    cfg.show_config();
-    cfg.show_ports();
-    std::cout << "workers:" << cfg.get_workers() << std::endl;
-    std::cout << "CGI:" << std::endl;
-    cfg.show_cgi();
-    std::cout << "ERROR_PAGES:" << std::endl;
-    cfg.show_error_pages();
-    return 0;
-    */
-
-
-
-   /*
-    int opt;
-    char role = 's';
-    while ((opt = getopt(argc, argv, "cs")) != -1){
-        switch (opt)
-        {
-        case 'c':
-            role = 'c';
-            break;
-        case 's':
-            role = 's';
-            break;
-        default:
-            printf("usage: %s [cs]\n", argv[0]);
-            exit(1);
-        }
     }
-    if (role == 's'){
-    */
 
-    ///Using select
+    log.print(INFO,"------------------------------ PARSE RAW CONFIG FILE LOAD FROM :" + myoptions.get_path() + "------------------------",YELLOW,true);
+   
+    //main loop
     /*
-    {
-        struct timeval tv;
-        fd_set  master;     // master file descriptor list
-        fd_set read_fds;    // temp file descriptor list for select()
-        int fdmax;        // maximum file descriptor number
-        int newfd;   
-        int fd_listen;
-        int nbytes;
-
-        tv.tv_sec = 2;
-        tv.tv_usec = 500000;
-
-        SimpleSocket mysocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        int fd = mysocket.get_sock();
-        
-        FD_ZERO(&master);       // clear all
-        FD_ZERO(&read_fds);     // clear all
-
-
-        int nb_server = 0;
-        int nb_port = 0;
-        //creo los listeners 
-        SimpleServer myserver1(AF_INET, SOCK_STREAM, IPPROTO_TCP,  nbserver._configuration.at(nb_server).port(nb_port), INADDR_ANY);
-       
-
-        std::cout << " socket = " << fd_listen << std::endl;
-        std::cout << " socket = " << myserver1.get_socket() << std::endl; ///este
-        fd_listen = myserver1.get_socket();
-
-        //los uno al select add the listener to the master set
-        FD_SET(fd_listen, &master);
-        
-        //CONTROLO EL MAX FD keep track of the biggest file descriptor
-        fdmax=fd_listen; // so far, it's this one
-
-    }
-    */
-        //main loop
-/*
         while (1)
         {
             read_fds = master; // copy it
@@ -210,13 +147,22 @@ int main(int argc, char **argv)
         } // END infinte loop it would never end!
 
 */    
-
-        
-
-        std::cout << "Starting Server" << std::endl;
-        SimpleServer myserver(AF_INET, SOCK_STREAM, IPPROTO_TCP,  85, INADDR_ANY);
-        myserver.launch();
-        std::cout << "Ending" << std::endl;
-        
+    
+    
+    log.print(INFO,"Starting Servers",GREEN,true);
+    g_servers.resize(my_cluster.get_nb_servers());                              // resize to the number of servers
+    for (int i = 0; i < my_cluster.get_nb_servers(); i++)
+    {
+        g_servers[i]._id = i;                                                   // pass the number of the server
+        g_servers[i]._conf = my_cluster.get_server(i);                          //
+        pthread_create(&g_servers[i]._thr,NULL, start_server ,&g_servers[i]);
+        usleep(500);
+    }
+    for (int i = 0; i < my_cluster.get_nb_servers(); i++)
+    {
+        pthread_join(g_servers[i]._thr,NULL);
+    }
+    pthread_mutex_destroy(&g_write);
+    std::cout << "Stopping Servers" << std::endl;
     return (0);
 }

@@ -6,13 +6,16 @@ SRCS_LIST	= \
 						Utils/utils.cpp \
 						Utils/logger.cpp \
 						Utils/page_errors.cpp \
+						Utils/file.cpp \
 						Config/config.cpp \
 						Config/parse_config_server.cpp \
 						Config/parse_options.cpp \
 						HTTP/Request.cpp \
 						HTTP/Response.cpp \
 						HTTP/SimpleServer.cpp \
-						HTTP/SimpleSocket.cpp 
+						HTTP/SimpleSocket.cpp \
+						HTTP/Cgi.cpp			
+
 
 SRCS_FOLDER		= srcs
 

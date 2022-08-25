@@ -16,7 +16,18 @@
 #include <netinet/in.h>
 #include <iostream>
 #include "page_errors.hpp"
+#include "config.hpp"
+#include "Request.hpp"
+#include "file.hpp"
+#include "Cgi.hpp"
 
+struct auto_listing {
+  std::string name;
+  bool is_dir;
+  std::string date;
+  size_t size;
+};
+extern pthread_mutex_t g_write;
 
 class Response 
 {
@@ -27,18 +38,32 @@ class Response
         int _contentLength;
         std::string _charset;
         std::string _location;
-  
-        std::string _response;                  //salida final
-        std::string _header;
-        std::string _body;
-        //std::vector<std::string>    _setCookies;
-        int _type;
+        std::string _date;
+
+        Request     _request;
+        int         _stat;                            //status from request error 
+        File _file;                         
+        std::string _response;                  //salida final = header+body
+        std::string _header;                    //header for response
+        std::string _body;                      //body for response
+        int         _type;
+        bool        _is_a_cgi;
+        std::map<std::string, std::string> _response_headers;
     public:
-        Response();
+        Response(Request newrequest, int _status);
         ~Response();
         void initResponse();
+        int createErrorPage(int code);
+        std::string autoindex(std::string &root, std::string &path);
+        void build_body();
+        int method_Delete();
+        int method_Post();
+        int method_Get();
         void setHeader();
         void setResponse();
         int sendResponse(int socket);
+        bool is_allow_method(std::string met);
+        bool get_is_a_CGI(){return _is_a_cgi;};
+        bool isCGI(std::string extension);
 };
 #endif

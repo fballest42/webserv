@@ -18,8 +18,8 @@ bool isSpace(char c);
 
 void strip(const std::string& in, std::string& out);
 
-int nb_tokens(std::string str, std::string delimiter);
+int nb_tokens(std::string str, char delimiter);
 
-std::string  get_token(std::string str, std::string delimiter, int nb);
+std::string  get_token(std::string str, char delimiter, int nb);
 
 bool file_exits(const std::string name);

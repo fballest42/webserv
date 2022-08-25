@@ -28,6 +28,7 @@ class Parse_config
         Parse_config(std::string  path);
         ~Parse_config(){};
 
+        Config get_server(int n){return _configuration[n];};
         bool parse(void);
         int get_nb_servers(){return _nb_servers;};
         void show_config(void);

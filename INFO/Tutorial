@@ -1,3 +1,6 @@
+How the web works: HTTP and CGI explained
+https://www.garshol.priv.no/download/text/http-tut.html 
+
 to create sockets class
 Servidor web C++ desde cero:: objeto socket Eric O Meehan
 
@@ -63,3 +66,29 @@ index file ....;    //defines file that will be used as an index
 cgi extension cgi_path;     //defines files that will be executed for given extension
 
 cgi_bin folder_path; (default ./cgi-bin)    //define a folder where to search CGI binaries
+
+sudo lsof -PiTCP -sTCP:LISTEN
+npx kill-port 3000 8080 8081
+kill -9 $(lsof -ti:3000)
+lsof -nti:90| xargs kill -9
+sudo kill -9 nb_pid
+
+CGI 
+go to http://127.0.0.1/cgi-bin/hello.pl This causes the execution of the perl script hello.pl
+
+Interaction
+• Client makes a request by specifying a URL+additional info.
+• WS (in the URL) receives the request.
+• WS identifies the request as a CGI request
+• WS locates the program corresponding to the request.
+• WS starts up the handling program (heavy weight process creation!!)
+• WS feeds request parameters to handler (through stdin or environment variables).
+• Handler executes
+• Output of the handler is sent via stdout back to the webserver for rerouting back to the requesting web browser.
+• Output is typically a web page.
+• Handler terminates.
+
+
+http://localhost:8001/siteA?x=1,y=2
+
+http://localhost:8001/cgi-bin/ice_cream.py?flavor=mint

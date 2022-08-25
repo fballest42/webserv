@@ -18,5 +18,6 @@ class Error_page
         Error_page();
         ~Error_page();
         std::string get_error_page(int error_type);
+        std::string get_error_description(int error_type);
 };
 

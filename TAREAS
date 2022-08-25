@@ -1,0 +1,10 @@
+-GET 
+    - ver si es directorio y tiene autoindex
+    - sino ver si entregamos el fichero (ISCGI)
+        -html -txt -jpeg...
+    
+-POST
+    - guardar archivo o ejecutar cgi.
+-DELETE
+
+Referer: http://localhost:8001/STARTREK

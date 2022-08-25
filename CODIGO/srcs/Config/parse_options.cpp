@@ -20,7 +20,7 @@ std::string Parse_options::helpText(void)
     text += "Usage: webserv [options] [config_file]\n";
     text += "\nOptions: \n";
     text += "\n  -h --help          : this help text\n";
-    text += "\n  -l, --log [LEVEL]  : set log level (between 0 and 2) \n";
+    //text += "\n  -l, --log [LEVEL]  : set log level (between 0 and 2) \n";
     text += "\n  -t, --test         : test config and exit\n";
     text += "\n  -u, --uri          : keep location uri on routing\n";
     return (text);
@@ -43,6 +43,7 @@ bool Parse_options::parse(void)
             {    std::cout << "uri" << std::endl;is_valid = true;}
             if ((tmp == "-t" or tmp == "--test") && is_valid == false)
             {    std::cout << "test" << std::endl;is_valid = true;}
+            /*
             if ((tmp == "-l" or tmp == "--log") && is_valid == false)
             {    
                 c++;
@@ -66,36 +67,51 @@ bool Parse_options::parse(void)
                 _level = nb;
                 is_valid = true;
             }
+            */
             //check is a file
-            if (file_exits(tmp) && is_valid == false)
+            if (tmp[0]!='-')
             {
-                std::cout << "is a file" << file_exits(tmp) << tmp << std::endl;
-                _path = tmp;
-                is_valid = true;
-                nb_config_files ++;
+                if (file_exits(tmp) && is_valid == false)
+                {
+                    std::cout << "is a file" << file_exits(tmp) << tmp << std::endl;
+                    _path = tmp;
+                    is_valid = true;
+                    nb_config_files ++;
+                }
+                else 
+                {
+                    std::cout << "is not a file" << tmp << std::endl;
+                    return (true);
+                }
             }
         c++;
         if (nb_config_files>1)
         {
-            throw WebServer_Exception("error too many config files");
+            //throw WebServer_Exception("error too many config files");
             return (true);
         }
+        /*
         if (nb_logs > 1)
         {
             throw WebServer_Exception("error too log parameters");
             return (true);
         }
+        */
         if (is_valid==false)
-        {
-                
-            throw WebServer_Exception("config file not found");
+        {  
+            //throw WebServer_Exception("config file not found");
             return (true);
         }
     }
     //check if file confi
+    
+    if(_path.empty())
+    {
+        _path = "./config/default.conf";
+    }
     if (!file_exits(_path) )
     {
-       throw WebServer_Exception("default config file default.conf not found at ./config/");
+       //throw WebServer_Exception("default config file default.conf not found at ./config/");
         return (true);
     }
     return (false);

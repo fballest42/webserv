@@ -41,7 +41,7 @@ void SimpleSocket::test_socket(int item_to_test)
         perror("Failed to create socket");
         exit(EXIT_FAILURE);
     } else {
-        std::cout << "socket() " << item_to_test << " is OK!" << std::endl;
+        //std::cout << "socket() " << item_to_test << " is OK!" << std::endl;
     }
 }
 

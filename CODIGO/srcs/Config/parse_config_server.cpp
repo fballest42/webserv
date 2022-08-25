@@ -1,6 +1,18 @@
+// Check general configuration file 
+//      workers 9;
+//      server {
+//          ...
+//      }
+//      server {
+//          ...
+//      }
+// and load each server definition in a Config Class (vector<string>, nb)
+
 #include "parse_config_server.hpp" 
 
-//construtor
+extern Logger log;
+
+//constructor
 Parse_config::Parse_config(std::string  path) : _path(path), _nb_servers(0){}
 
 //Divide las configuraciones de varios servidores store in a vector of config and parse it
@@ -30,14 +42,14 @@ bool Parse_config::parse(void)
       if (!s_out.empty() && s_out.at(0) != '#')     //not empty lines and comment
       {              
             is_valid = false;
-            if (get_token(s_out," ",0)=="workers")
+            if (get_token(s_out,' ',0)=="workers")
             {
-                _workers = stoi(get_token(s_out, " ", 1));
+                _workers = stoi(get_token(s_out, ' ', 1));
                 is_valid = true;
                 nb_w++;
             }
 
-            if (get_token(s_out," ",0)=="server")
+            if (get_token(s_out, ' ',0)=="server")
             {
                 _nb_servers = _nb_servers + 1;
                 is_server = true;
@@ -46,9 +58,9 @@ bool Parse_config::parse(void)
             
             if (is_server)
             {
-                if (get_token(s_out," ", nb_tokens(s_out, " "))=="{")
+                if (get_token(s_out, ' ', nb_tokens(s_out, ' '))=="{")
                     open_brakers = open_brakers + 1;
-                if (get_token(s_out," ", nb_tokens(s_out, " "))=="}")
+                if (get_token(s_out, ' ', nb_tokens(s_out, ' '))=="}")
                     open_brakers = open_brakers - 1;
                 if (open_brakers == 0)
                 {
@@ -90,19 +102,17 @@ bool Parse_config::parse(void)
     // Hay al menos un servidor definido?
     if (_nb_servers == 0)
         throw WebServer_Exception("missing server block");
-    
-    //carga each configuration server 
+   
+    //carga each configuration server  in a matriz of config 
     int e = 0;
     while ( e < _nb_servers )
     {
-        std::vector<std::string> tmp(_server.at(e));
-        {
-            Config cfg1(_server.at(e)); //yyyyborrar
-            _configuration.push_back(cfg1);
-        }
+        Config cfg1(_server.at(e), e);
+        _configuration.push_back(cfg1);
         e++;
     }
-
+    //log.print(INFO,"-- XXXXXXX -- " + std::to_string(_nb_servers ), BLUE,true);
+    //Check each config is ok
     e = 0;
     while ( e < _nb_servers )
     {
@@ -110,6 +120,7 @@ bool Parse_config::parse(void)
             return(false);
         e++;
     }
+    //log.print(INFO,"-- XXXXXXX -- " + std::to_string(_nb_servers ), BLUE,true);
     return true;
 }
 
@@ -131,7 +142,6 @@ void Parse_config::show_config(void)
             d++;
         }
         std::cout << std::endl;
-        //std::cout << "servidor ;" << c << std::endl; //<< " numbr of tokens: " << nb_tokens(_vector_cfg.at(c)," ") << std::endl;
         c++;
     }
     return;
@@ -139,12 +149,6 @@ void Parse_config::show_config(void)
 
 void Parse_config::show_config_one(int n)
 {
-    _configuration.at(n).show_ports();
-    _configuration.at(n).show_roots();
-    _configuration.at(n).show_index();
-    _configuration.at(n).show_autoindex();
-    _configuration.at(n).show_cgi();
-    _configuration.at(n).show_cgi_bin();
-    _configuration.at(n).show_error_pages();
+    _configuration.at(n).show_all();
     return;
 }
