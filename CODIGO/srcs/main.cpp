@@ -61,7 +61,7 @@ int main(int argc, char **argv)
         std::cout << "\nError en config:" << std::endl;
         return(0);
     }
-    
+
     log.print(INFO,"------------------------------ "+ std::to_string(my_cluster.get_nb_servers())  + ": SERVERS DETECTED ---------------------------------- ",YELLOW,true);
     std::cout << my_cluster.get_nb_servers() << " servers detected." << std::endl;
 

@@ -2,6 +2,12 @@
 
 Error_page::Error_page()
 {
+    // INFORMATIONAL
+    _error_pages[100] = "Continue";
+    _error_pages[101] = "Switching Protocol";
+    _error_pages[102] = "Processing (WebDAV)";
+    _error_pages[103] = "Early Hints";
+    // SUCCESS
     _error_pages[200] = "OK";
     _error_pages[201] = "Created";
     _error_pages[202] = "Accepted";
@@ -12,14 +18,22 @@ Error_page::Error_page()
     _error_pages[207] = "Multi-Status";
     _error_pages[208] = "Already Reported";
     _error_pages[226] = "IM Used";
-
+    // REDIRECTION
+    _error_pages[300] = "Multiple Choice";
+    _error_pages[301] = "Moved Permanently";
+    _error_pages[302] = "Found";
+    _error_pages[303] = "See Other";
+    _error_pages[304] = "Not Modified";
+    _error_pages[305] = "Use Proxy";
+    _error_pages[307] = "Temporary Redirect";
+    _error_pages[308] = "Permanent Redirect";
     //Error de cliente
     _error_pages[400] = "Bad Request";
     _error_pages[401] = "Unauthorized";
     _error_pages[402] = "Payment Required";
     _error_pages[403] = "Forbidden";
     _error_pages[404] = "Not Found";
-    _error_pages[405] = "Not Allowed";
+    _error_pages[405] = "Method Not Allowed";
     _error_pages[406] = "Not Acceptable";
     _error_pages[407] = "Proxy Authentication Required";
     _error_pages[408] = "Request Timeout";
@@ -34,13 +48,16 @@ Error_page::Error_page()
     _error_pages[417] = "Expectation Failed";
     _error_pages[418] = "I'm a teapot";
     _error_pages[421] = "Misdirected Request";
-    _error_pages[422] = "Unprocessable Entity";
-    _error_pages[423] = "Locked";
+    _error_pages[422] = "Unprocessable Entity (WebDAV)";
+    _error_pages[423] = "Locked (WebDAV)";
+    _error_pages[424] = "Failed Dependency (WebDAV)";
+    _error_pages[425] = "Too Early";
     _error_pages[426] = "Upgrade Required";
     _error_pages[428] = "Precondition Required";
     _error_pages[429] = "Too Many Request";
     _error_pages[431] = "Request Headers Fields Too Large";
     _error_pages[451] = "Unavailable For Legal Reasons";
+    _error_pages[499] = "Client Closed Request";
     //Errores de Servidor
     _error_pages[500] = "Internal Server Error";
     _error_pages[501] = "Not implemented";
@@ -52,6 +69,8 @@ Error_page::Error_page()
     _error_pages[507] = "Insufficient Storage";
     _error_pages[508] = "Loop Detected";
     _error_pages[510] = "Not Extended";
+    _error_pages[511] = "Network Authentication Requiered";
+    _error_pages[599] = "Network Connect Timeout Error";
     _error_pages[999] = "Unidentify error";
 };
 

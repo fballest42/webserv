@@ -16,7 +16,11 @@
 
 bool isSpace(char c);
 
+bool isTab(char c);
+
 void strip(const std::string& in, std::string& out);
+
+void stripTab(const std::string& in, std::string& out);
 
 int nb_tokens(std::string str, char delimiter);
 

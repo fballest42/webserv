@@ -8,7 +8,8 @@
 //      }
 // and load each server definition in a Config Class (vector<string>, nb)
 
-#include "parse_config_server.hpp" 
+#include "parse_config_server.hpp"
+#include "utils.hpp" 
 
 extern Logger log;
 
@@ -30,15 +31,17 @@ bool Parse_config::parse(void)
     bool is_finish = false;
     char *line;
     std::string s_out ="";
+    std::string s_outm ="";
     int open_brakers = 0;
     int nb_w = 0;
     std::vector<std::string> tmp;
-
+    
     while(get_next_line(_fd, &line))
     {
       
       std::string s(line);
-      strip(s, s_out);                              //delete spaces not necesary
+      stripTab(s, s_outm);
+      strip(s_outm, s_out);                              //delete spaces not necesary
       if (!s_out.empty() && s_out.at(0) != '#')     //not empty lines and comment
       {              
             is_valid = false;
@@ -105,6 +108,7 @@ bool Parse_config::parse(void)
    
     //carga each configuration server  in a matriz of config 
     int e = 0;
+    std::cout << _nb_servers << " " << _server.size() << std::endl;
     while ( e < _nb_servers )
     {
         Config cfg1(_server.at(e), e);

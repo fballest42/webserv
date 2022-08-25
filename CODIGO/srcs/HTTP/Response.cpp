@@ -130,13 +130,15 @@ void Response::setHeader()
     */
     //Create header version 2
     std::cout << "--- HEADERS VERSION 2 ---" << std::endl;
-    std::cout << _stat << " " << err_page.get_error_description(_stat) << std::endl;
+    //std::cout << _stat << " " << err_page.get_error_description(_stat) << std::endl;
     _response_headers["Server"] = "webserver42/1.0";
     _response_headers["Content-Length"] = std::to_string(this->_contentLength);
     _response_headers["charset"] = this->_charset;
     this->_date = get_http_date();
     _response_headers["Date"] = this->_date;
-    _response_headers["Connection"] = "close"; //_response_headers["Connection"] = "Keep-Alive"; 
+    _response_headers["Connection"] = "close";
+    _response_headers["Content-Type"] = "text/html";
+     //_response_headers["Connection"] = "Keep-Alive"; 
     //_response_headers["Keep-Alive"] = "timeout=5, max=997";
 
     // create header
@@ -144,7 +146,9 @@ void Response::setHeader()
     this->_header += " ";
     this->_header += std::to_string(this->_stat); 
     this->_header += " ";
+    std::cout << "AQUI====" << std::to_string(_stat) << std::endl;
     this->_header += err_page.get_error_description(_stat); 
+    std::cout << "--- HEADERS VERSION 2B ---" << std::endl;
     this->_header += "\r\n"; 
     for (std::map<std::string, std::string>::iterator it=_response_headers.begin(); it!=_response_headers.end(); ++it)
     {
@@ -155,6 +159,7 @@ void Response::setHeader()
         this->_header += "\r\n";
     }
     this->_header += "\r\n";
+
     return;
 
 

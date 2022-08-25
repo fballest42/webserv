@@ -4,6 +4,22 @@
 bool isSpace(char c)
 { return (c == ' ');}
 
+bool isTab(char c)
+{    return (c == '\t');}
+
+void stripTab(const std::string& in, std::string& out) 
+{ 
+    std::string::const_iterator b = in.begin(), e = in.end(); 
+    // skipping leading spaces 
+    while (isTab(*b)){ ++b; } if (b != e)
+    { 
+        // skipping trailing spaces 
+        while (isTab(*(e-1)))
+        { --e; } 
+    } 
+    out.assign(b, e); 
+}
+
 // Delete spaces 
 void strip(const std::string& in, std::string& out) 
 { 
