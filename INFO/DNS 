@@ -1,0 +1,9 @@
+sudo nano /private/etc/hosts
+
+añadir
+
+#Added to try webserver
+192.168.1.214 google.com www.google.com
+
+dscacheutil -flushcache
+
