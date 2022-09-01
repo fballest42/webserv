@@ -261,7 +261,13 @@ int Request::method_line() {
       //limits except
       _config._limits_except = new_config._limits_except;
       //CGI-BIN
-      _config._cgi_bin = new_config._cgi_bin;
+      if (!new_config._cgi_bin.empty())
+      {
+        std::cout << "ESTOY AQUI -------------------------------------------------\n"; 
+        std::cout << _config._cgi_bin << std::endl;
+        std::cout << new_config._cgi_bin << std::endl;
+        _config._cgi_bin = new_config._cgi_bin;
+      }
       //CGI
       _config._cgi = new_config._cgi; 
       _config._locations.clear();

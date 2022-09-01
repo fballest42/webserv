@@ -140,7 +140,7 @@ void Response::setHeader()
     this->_date = get_http_date();
     _response_headers["Date"] = this->_date;
     _response_headers["Connection"] = "close";
-    _response_headers["Content-Type"] = "text/html";
+    // _response_headers["Content-Type"] = "text/html";
      //_response_headers["Connection"] = "Keep-Alive"; 
     //_response_headers["Keep-Alive"] = "timeout=5, max=997";
 
@@ -172,7 +172,7 @@ void Response::build_body()
 {
     log.print(INFO,"--------------- START BUILD RESPONDE BUILD --------------", GREEN,true);
     log.print(INFO,"CHECK IF ERROR IN REQUEST: " + std::to_string(_stat), YELLOW,true);
-    if (_stat > 200)
+    if (_stat >= 300)
     {
         log.print(INFO,"=> ERROR IN REQUEST: Creating error page:" + std::to_string(_stat),RED,true);
         createErrorPage(_stat);
@@ -187,7 +187,7 @@ void Response::build_body()
         log.print(INFO,"=> METHOD NOT ALLOWED",RED,true);
         _stat = 501;
     }
-    if (_stat > 200)
+    if (_stat >= 300)
     {
         log.print(INFO,"Creating error page:" + std::to_string(_stat),RED,true);
         createErrorPage(_stat);
@@ -204,7 +204,7 @@ void Response::build_body()
         if (!method_Delete())
             return;
     }
-    if (_stat > 200)
+    if (_stat >= 300)
     {
         log.print(INFO,"Creating error page:" + std::to_string(_stat),RED,true);
         createErrorPage(_stat);
@@ -224,7 +224,7 @@ void Response::build_body()
         log.print(INFO,"IT IS GET METHOD", GREEN,true);
         method_Get();
     }
-    if (_stat > 300 and !get_is_a_CGI())
+    if (_stat >= 300 and !get_is_a_CGI())
     {
         log.print(INFO,"Creating error page:" + std::to_string(_stat),RED,true);
         createErrorPage(_stat);
@@ -260,34 +260,100 @@ int Response::method_Delete(){
 
 //return 0 if post ok, 1 if not. devuelve en el body el body que recibe
 int Response::method_Post(){
+    
+    if (_request.get_isFile() == true)    //it is a file
+    {
+            log.print(INFO,"IS a file ...." + this->_request.get_pathInfo() + "/" + this->_request.get_fileName(),RED,true);
+            if (isCGI_extension(this->_request.get_fileName(), _request._config._cgi) && this->_request.get_pathInfo() == "cgi-bin")
+            {
+                log.print(INFO,"IS a CGI file",GREEN,true);
+                _is_a_cgi = true;
+                //extension file cgi
+                CGI cgi(this->_request);
+                cgi.init(1);
+                int ret = cgi.execute();
+                _body = cgi.getBody();      // Put result in the Body 
+                log.print(INFO,"server : >>  result cgi execvu: \n" + _body + std::to_string(ret),YELLOW,true);
+                _response_headers["Content-Type"] = "CGI/MINE";
+                return (_stat = ret);
+                //return 0;
+                //DO the MAGIC HERE
+                //Define class
+                /*
+                CGI cgi(file_, config_, config_.getHeaders(), config_.getBody());
+                cgi.init(worker_id_);
+                if ((status_code_ = cgi.execute()) > 400)
+                    return status_code_;
+                cgi.parseHeaders(headers_); // Put some values in the headers
+                body_ = cgi.getBody();      // Put result in the Body 
+                headers_["Content-Length"] = ft::to_string(body_.length());
+                return status_code_;
+                */
+            } else {
+                log.print(INFO,"IS NOT CGI file",RED,true);
+                // std::string new_path = _request._config.get_root() + "/" + _request.get_pathInfo() + _request.get_fileName();
+                // _file.set_path(new_path);
+                // log.print(INFO,"New path of file",RED,true);
+                File tmp_file;
+                std::string ext_file, loc_file;
+                ext_file = _request._config.get_root() + _request._config.get_upload()+"/"+_request.get_fileName();
+                loc_file = _request._config.get_upload()+"/"+_request.get_fileName();
+                log.print(INFO,"path file to upload: " + ext_file, YELLOW,true);
+                tmp_file.set_path(ext_file);
+                std::string str = _request.get_body();
+                _body = str;
+                pthread_mutex_lock(&g_write);
+                if(!tmp_file.exists()){     // no -> file create (body) --> code 201
+                    log.print(INFO,"Creating file : " + ext_file, YELLOW,true);
+                    tmp_file.create(str);
+                    _response_headers["Location"] = loc_file ;
+                    if (_request.get_isChunked() == 1)
+                        _stat = 226;
+                    else
+                        _stat = 201;
+                }
+                else {                      // si -> file append (body) --> code 200
+                    log.print(INFO,"Append to file : " + ext_file, YELLOW,true);
+                    tmp_file.append(str);
+                    _response_headers["Location"] = loc_file ;
+                    _stat = 200;
+                }
+                pthread_mutex_unlock(&g_write);
+                tmp_file.close();
+                tmp_file.unlink();
+            }
+            //_file.set_path(_request._config.get_root() + _request.get_pathCGI() + "/" + _request.get_fileCGI());
+    }
+ 
+    
     //file exits? 
-    File tmp_file;
-    std::string ext_file, loc_file;
-    ext_file = _request._config.get_root() + _request._config.get_upload()+"/"+_request.get_fileName();
-    loc_file = _request._config.get_upload()+"/"+_request.get_fileName();
-    log.print(INFO,"path file to upload: " + ext_file, YELLOW,true);
-    tmp_file.set_path(ext_file);
-    std::string str = _request.get_body();
-    _body = str;
-    pthread_mutex_lock(&g_write);
-    if(!tmp_file.exists()){     // no -> file create (body) --> code 201
-        log.print(INFO,"Creating file : " + ext_file, YELLOW,true);
-        tmp_file.create(str);
-        _response_headers["Location"] = loc_file ;
-        if (_request.get_isChunked() == 1)
-            _stat = 226;
-        else
-            _stat = 201;
-    }
-    else {                      // si -> file append (body) --> code 200
-         log.print(INFO,"Append to file : " + ext_file, YELLOW,true);
-        tmp_file.append(str);
-        _response_headers["Location"] = loc_file ;
-        _stat = 200;
-    }
-    pthread_mutex_unlock(&g_write);
-    tmp_file.close();
-    tmp_file.unlink();
+    // File tmp_file;
+    // std::string ext_file, loc_file;
+    // ext_file = _request._config.get_root() + _request._config.get_upload()+"/"+_request.get_fileName();
+    // loc_file = _request._config.get_upload()+"/"+_request.get_fileName();
+    // log.print(INFO,"path file to upload: " + ext_file, YELLOW,true);
+    // tmp_file.set_path(ext_file);
+    // std::string str = _request.get_body();
+    // _body = str;
+    // pthread_mutex_lock(&g_write);
+    // if(!tmp_file.exists()){     // no -> file create (body) --> code 201
+    //     log.print(INFO,"Creating file : " + ext_file, YELLOW,true);
+    //     tmp_file.create(str);
+    //     _response_headers["Location"] = loc_file ;
+    //     if (_request.get_isChunked() == 1)
+    //         _stat = 226;
+    //     else
+    //         _stat = 201;
+    // }
+    // else {                      // si -> file append (body) --> code 200
+    //      log.print(INFO,"Append to file : " + ext_file, YELLOW,true);
+    //     tmp_file.append(str);
+    //     _response_headers["Location"] = loc_file ;
+    //     _stat = 200;
+    // }
+    // pthread_mutex_unlock(&g_write);
+    // tmp_file.close();
+    // tmp_file.unlink();
     return 0;
 }
 
@@ -343,7 +409,9 @@ int Response::method_Get(){
         }
         else //is a path must join default index.html
             _file.set_path(_request._config.get_root() + _request.get_pathInfo() + "/" + _request._config.get_index());
+        
         log.print(INFO,"path to file: "+ _file.getPath() ,GREEN,true); 
+        
         // if the file not exit error 404
         if (!_file.exists()){
             _stat = 404;

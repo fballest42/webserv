@@ -204,8 +204,8 @@ int Config::parse(void)
     //// SETTING DEFAULT VALUES 
     if (_ports.empty())
         _ports.push_back(80);   // puerto 80 default
-    if (_cgi_bin.empty())
-        _cgi_bin = " /cgi-bin/";
+    // if (_cgi_bin.empty())
+    //     _cgi_bin = "/cgi-bin/";
     if (_limits_except.empty()){
         _limits_except.push_back("POST");
         _limits_except.push_back("DELETE");

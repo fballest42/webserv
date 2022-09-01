@@ -52,9 +52,12 @@ bool CGI::setCGIEnv() {
   {
     std::string str = it->first;
     std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+    std::string tmp;
+    strip(it->second, tmp);
     std::string header = "HTTP_" + str;
     std::replace(header.begin(), header.end(), '-', '_');
-    _cgi_env[header] = it->second;
+    _cgi_env[header] = tmp;
+    std::cout << "/////////////////////////////////////" << it->second << "////" << std::endl;
   }
 
   //_cgi_env["COMSPEC"] = "CGI/1.1";
@@ -150,8 +153,9 @@ void CGI::init(int worker_id) {
 */
 int CGI::execute() {
   // Build absolute path to access CGI file 
-  std::string file_p = this->_current_directory + "/" + this->_request._config.get_root() + "/" + this->_request._config.get_cgi_bin() + "/";
-  log.print(INFO,"server : >>  Complete path of cgi file" + this->_request.get_fileName() ,BLUE,true);
+  // std::string file_p = this->_current_directory + "/" + this->_request._config.get_root() + "/" + this->_request._config.get_cgi_bin() + "/";
+  std::string file_p = this->_current_directory + "/" + this->_request._config.get_cgi_bin() + "/";
+  log.print(INFO,"server : >>  Complete path of cgi file " + this->_request.get_fileName() ,BLUE,true);
   log.print(INFO,"server : >>  cgi file  " + file_p ,BLUE,true);
   
   // Set Enviroment
@@ -201,8 +205,9 @@ int CGI::execute() {
   else {
     return 502;
   }
-  _body = _tmp_file.getContent();
-  return 200;
+  _body = _request.get_body();
+  _body += _tmp_file.getContent();
+  return 226;
 }
 
 std::string &CGI::getBody() {
