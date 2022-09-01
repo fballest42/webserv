@@ -41,19 +41,32 @@ int Request::parse(std::string &buffer)
   gettimeofday(&_last_timer, NULL);
   _buffer += buffer;
   buffer.clear();
+  
   if ((ret = method_line()) > 0)
     return ret;
+  log.print(INFO,"METHOD LINE OK",RED, true);
   //Check prebody for chunked data
-
+ std::cout << "BUFFER check:" << _buffer << std::endl;
   if ((ret = headers()) > 0)
     return ret;
+  log.print(INFO,"HEADERS OK",RED, true);
+   std::cout << "BUFFER check:" << _buffer << std::endl;
   if ((ret = chunked()) > 0)
     return ret;
-  if ((ret = body()) > 0 &&  !get_isChunked() ) // is not chunked ????
+  
+  std::cout << "BUFFER check:" << _buffer << std::endl;
+
+  if (!get_isChunked()) // is not chunked ????
   {
-    std::cout << "BODY---- ret:" << ret << std::endl;
-    return ret;
+    if ((ret = body()) > 0 )
+    {
+      std::cout << "BODY---- ret:" << ret << std::endl;
+      return ret;
+    }
   }
+  
+   std::cout << "BUFFER check:" << _buffer << std::endl;
+
   if (get_isChunked() && (ret = join_Chunks())) // is chunked ????
   {
     std::cout << "CHUNKED---- ret:" << ret << std::endl;
@@ -68,8 +81,9 @@ int Request::parse(std::string &buffer)
       return 413;
     }
   //}
-  if (_body.empty() == true && _method == "POST")
-      ret = 405;
+
+  //if (_body.empty() == true && _method == "POST")
+  //    ret = 405;
   return ret;
 }
 
@@ -251,7 +265,7 @@ int Request::method_line() {
       //CGI
       _config._cgi = new_config._cgi; 
       _config._locations.clear();
-      _config.show_all();
+      //_config.show_all();
     }
   }
 
@@ -340,40 +354,85 @@ int Request::headers()
   std::string tmp;
   while (1)
   {
+    int c;
     tmp = _buffer.substr(0, _buffer.find("\r\n"));
-    if (nb_tokens(tmp,' ') == 0)
+    c = nb_tokens(tmp,':');
+    //std::cout << "NNNN--NB-" << std::to_string(c) << std::endl;
+    if (c == 0 ) 
     {
-      // graba el headers.
       break;
     }
+    //if (c != 2)
+    //  return 400;
+    
     // graba el headers.
     std::string header;
     std::string header_value;
+   
+    std::string tmp1;
+    tmp1 = get_token(tmp, ':', 0);
+    if (tmp1[tmp1.length()-1] == ' ')
+      return 400;
 
-    header = get_token(tmp, ' ', 0);  
-    if (header[header.size()-1]==':') // Delete ":"
-        header.pop_back(); 
-    header_value = get_token(tmp, ' ', 1);   
+    header = ft_clean_token(get_token(tmp, ':', 0));  
 
-    std::cout << "tokens ------> "<< header << "\t\t\t\t" << header_value << std::endl;
-    //guardo los headers compruebo que existe antes?
+    if (c < 2 )
+      return (400); 
+    else
+      header_value = ft_clean_token(get_token(tmp, ':', 1));
+    //std::cout << "NNNN---" << header << header_value << std::endl;
+    // Check length of header (<=1000) and header (value <=4000)
     if (header.length() > 1000 || header_value.length() > 4000)
       return 400;
-    _request_headers[header]= header_value;
+    // Check if only one "Host" header.
+    if (header == "host" || header == "content-length")
+    {
+      if (header == "host")
+      {
+        if (_request_headers.find("host") == _request_headers.end())
+          _request_headers[header]= header_value;
+        else 
+          return 400;
+      }
+      if (header == "content-length")
+      {
+        if (_request_headers.find("content-length") == _request_headers.end())
+          _request_headers[header]= header_value;
+        else 
+          return 400;
+      }
+    }
+    else 
+    {
+      _request_headers[header]= header_value;
+    }
+
+    // Check if not headers
+    if (header.empty())
+      return 400;
     //delete la primera linea
     size_t end = _buffer.find("\r\n");
     _buffer.erase(0, end + 2);
+    //std::cout << "x---xx--" << header << header_value << std::endl;
+    //return 0;
   }
+
   //delete la siguiente linea en blanco
-  size_t end = _buffer.find("\r\n");
-  _buffer.erase(0, end + 2);
+  //size_t end = _buffer.find("\r\n");
+  //_buffer.erase(0, end + 2);
+
+  //Checking there are headers
+  // if (_request_headers.empty())
+  //   return (400);
+
   //Checking some headers
   // if header "Host" exits and is not blank
-  if (_request_headers.find("Host") == _request_headers.end() || _request_headers["Host"].empty())
+  if (_request_headers.find("host") == _request_headers.end() || _request_headers["host"].empty())
     return 400;
   // header "Host" don´t have @
-  if (_request_headers["Host"].find("@") != std::string::npos)
+  if (_request_headers["host"].find("@") != std::string::npos)
     return 400;
+
   // header "Content-Length" is exits, is a positive number a store in _content_length
   if (_request_headers.find("content-length") != _request_headers.end()) {
     if (_request_headers["content-length"].find_first_not_of("0123456789") != std::string::npos)
@@ -385,6 +444,8 @@ int Request::headers()
         return 400;
     }
   }
+
+  get_headers();
 
   return 0;
 }
@@ -445,74 +506,86 @@ int Request::join_Chunks(){   ////// /r/n OJOJOOJOJOJOOJOJOJOOOJO Y SUBT
   // second line ---> data
   // ends chunks if 0
   // last lines? headers: value 
+  std::cout << " CHUNKING :\n" << _buffer << std::endl;
   size_t end;
   size_t size;
   size_t size_line;
   end = _buffer.find("\r\n");
   _buffer.erase(0, end + 2); // borro la linea tratada.
-  while ((end = _buffer.find("\n")) != std::string::npos)
+  while ((end = _buffer.find("\r\n")) != std::string::npos)
   {
     //Size line
-    std::cout << " THE CHUNK LINE IS :" << _buffer.substr(0,end) << std::endl;
+    //std::cout << " THE CHUNK LINE IS :" << _buffer.substr(0,end) << std::endl;
     std::string hex = _buffer.substr(0,end);
     std::cout << " THE CHUNK LINE IS :" << hex << std::endl;
     try {
       size = (int) strtol(hex.c_str(), NULL, 16);
-      _buffer.erase(0, end + 1); // borro la linea tratada.
+      _buffer.erase(0, end + 2); // borro la linea tratada.
       std::cout << " THE SIZE CHUNK IS :" << size << std::endl;
     }
     catch (std::exception &e){ 
         return 400;
     }
     if (size == 0) {
+      std::cout << " GOTO TO HEADERS:" << size << std::endl;
+      //_buffer.erase(0, end + 1); // borro la linea tratada.
       break;     //go to headers---->
     }
-    end = _buffer.find("\n");
+    end = _buffer.find("\r\n");
     //Data line
     if (end != std::string::npos){    // Tiene que haber linea de datos
-      std::cout << " THE DATA CHUNK IS :" <<  _buffer.substr(0, end) << "size:" << _buffer.substr(0, end).length() << std::endl;
+      std::cout << " THE DATA CHUNK IS :" <<  _buffer.substr(0, end) << " size: " << _buffer.substr(0, end).length() << std::endl;
       size_line = _buffer.substr(0, end).length();
       if (size_line != size)  // Check is size is correct
         return 400;
       _body += _buffer.substr(0, end); 
-      _buffer.erase(0, end+1); // borro la linea tratada.
+      _buffer.erase(0, end+2); // borro la linea tratada.
     }
     else {
       return 400;
     }    
   }
+  //end = _buffer.find("\n");
+  //_buffer.erase(0, end+1); // borro la linea tratada.
   //is any headers?
   std::string tmp;
-  while ((end = _buffer.find("\n")) != std::string::npos) {
-    if (_buffer.find("\n") == 0) { //no hay mas que ver
+  while ((end = _buffer.find("\r\n")) != std::string::npos) {
+    std::cout << " Checking header :" << tmp << std::endl;
+    if (_buffer.find("\r\n") == 0) { //no hay mas que ver
+      //_buffer.erase(0, end + 2);
+      return 226;
+    }
+    else {
+      tmp = _buffer.substr(0, _buffer.find("\r\n"));
+      std::cout << " THE line header CHUNK IS :" << tmp << std::endl;
+      if (tmp.empty())
+        return 226;
+      if (nb_tokens(tmp,':') != 2)
+      {
+        if (nb_tokens(tmp,' ') != 1)
+          return 400;
+        return 226;
+      }
+      // graba el headers.
+      std::string header;
+      std::string header_value;
+
+      header = get_token(tmp, ':', 0);  
+      if (header[header.size()-1]==':') // Delete ":"
+          header.pop_back(); 
+
+      header_value = get_token(tmp, ':', 1);
+      if (!header.empty())
+        _request_headers[header]=header_value;   
+      /*
+      else
+        return 400;
+      */
       _buffer.erase(0, end + 2);
-      break;
     }
-    
-    tmp = _buffer.substr(0, _buffer.find("\n"));
-    std::cout << " THE line header CHUNK IS :" << tmp << std::endl;
-    if (nb_tokens(tmp,' ') == 0)
-    {
-      break;
-    }
-    // graba el headers.
-    std::string header;
-    std::string header_value;
-
-    header = get_token(tmp, ' ', 0);  
-    if (header[header.size()-1]==':') // Delete ":"
-        header.pop_back(); 
-
-    header_value = get_token(tmp, ' ', 1);
-    _request_headers[header]=header_value;   
-    /*
-    else
-      return 400;
-    */
-    _buffer.erase(0, end + 2);
   }
 
-  std::cout << "Body Chunked"  << std::endl;
+  std::cout << "BODY CHUNKED:"  << std::endl;
   std::cout << _body << std::endl;
   return 0;
 }

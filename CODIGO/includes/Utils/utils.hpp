@@ -13,6 +13,13 @@
 #include <string> 
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <algorithm>
+
+float time_diff2(struct timespec *start, struct timespec *end);
+
+void capitalizeString(const std::string& in, std::string& out);
+
+std::string ft_clean_token(const std::string& in);
 
 bool isSpace(char c);
 

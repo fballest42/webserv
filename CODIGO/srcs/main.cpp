@@ -36,8 +36,14 @@ void *start_server(void *arg)
 
 int main(int argc, char **argv)
 {
-   
+    // std::string tmp("       ddfjhj  HHHjjj  ");
+    // std::string tmp1;
     
+    // tmp1 = ft_clean_token(tmp);
+    // std::cout << tmp1 << std::endl;
+//     std::cout << tmp1 << std::endl;
+
+    //return 0;
     Parse_options myoptions(argc, argv);
 
     if (myoptions.parse())

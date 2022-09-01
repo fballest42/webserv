@@ -56,6 +56,9 @@ void *server_port_launch(void *arg)
     fdmax = _server_socket; // so far, it's this one
     fdmin = _server_socket; // so far, it's this one
     //std::cout << "fdmax:" << fdmax << std::endl;
+
+    std::map< int , struct timespec> _start_time_connection;
+
     int i, j, rv;
     while(1)
     {
@@ -92,10 +95,28 @@ void *server_port_launch(void *arg)
                         //printf("selectserver: new connection from %s on socket %d\n", inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr*)&remoteaddr), remoteIP, INET6_ADDRSTRLEN), newfd);
                         log.print(INFO, msg, GREEN, true);
 
+                        //--- Aqui empieza el tiempo de conexión
+                        //std::map< int , struct timeval> 
+                        struct timespec start_time;
+                        clock_gettime(CLOCK_REALTIME, &start_time);
+                        //gettimeofday(&start_time, NULL); //get time and store in start_timer
+                        _start_time_connection[client_socket] = start_time;
+                        log.print(INFO,"Set Time: " ,RED,true); 
                     }
                 } 
                 else 
                 {   // handle data from a old client
+                    //Check time of connection
+                    struct timespec current_time_connection;
+                    clock_gettime(CLOCK_REALTIME, &current_time_connection);
+                    if (time_diff2(&_start_time_connection[i], &current_time_connection) > 10.0)
+                    {
+                        printf("loop Func  time spent: %0.8f sec\n", time_diff2(&_start_time_connection[i], &current_time_connection));
+                        log.print(INFO,"Rise Time",RED,true); 
+                        // close(i); // bye!
+                        // log.print(INFO,"Connection closed",GREEN,true);
+                        // FD_CLR(i, &master); // remove socket from master set
+                    }                    
                     if ((nbytes = recv(i, _buffer, sizeof _buffer, 0)) <= 0)  /* Hay un error en la lectura. Posiblemente el cliente ha cerrado la conexión. Hacer aquí el tratamiento. En el ejemplo, se cierra el socket y se elimina del array de socketCliente[] */
                     {   // got error or connection closed by client
                         if (nbytes == 0) {
@@ -111,7 +132,7 @@ void *server_port_launch(void *arg)
                     else
                     {   // we got some data from a client  /* Se ha leido un dato del cliente correctamente. Hacer aquí el tratamiento para ese mensaje. En el ejemplo, se lee y se escribe en pantalla. */
                         std::cout << _buffer << std::endl;
-                        
+
                         // Checking the request
                         Request newrequest(_config);
                         std::string request_string(_buffer);
@@ -132,9 +153,13 @@ void *server_port_launch(void *arg)
                                 perror("send");
                             }
                             log.print(INFO,"Response sent",GREEN,true);    
+                            //close(i); // bye!
+                            //log.print(INFO,"Connection closed",GREEN,true);
+                            //FD_CLR(i, &master); // remove socket from master set
                         }  
                                             
                     }
+                
                 } // END handle data from client
             }
         } // END got new incoming connection

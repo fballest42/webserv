@@ -43,6 +43,7 @@ Response::Response(Request newrequest, int status): _stat(status), _request(newr
     std::cout << "request._pathAfter: " << this->_request.get_pathAfter() << std::endl;
     std::cout << "request._query_string: " << this->_request.get_query() << std::endl;
     std::cout << "request._target: " << this->_request.get_target() << std::endl;
+    this->_request.get_headers();
     log.print(INFO," ACTUAL CONFIG:" ,YELLOW,true);
     this->_request._config.show_all();
 }
@@ -72,7 +73,9 @@ int Response::createErrorPage(int error_code){
     File tmp;
     if (_request._config.exist_error_page(error_code))
     {
-        tmp.set_path(_request._config.get_root() + _request._config.get_path_error_page(error_code));
+        //tmp.set_path(_request._config.get_root() + _request._config.get_path_error_page(error_code));
+        tmp.set_path(_request._config.get_path_error_page(error_code));
+       
         //tmp.set_path("www/siteA/errors/404.html");
         // Check if no problem when open file
         if(tmp.open())
@@ -169,7 +172,7 @@ void Response::build_body()
 {
     log.print(INFO,"--------------- START BUILD RESPONDE BUILD --------------", GREEN,true);
     log.print(INFO,"CHECK IF ERROR IN REQUEST: " + std::to_string(_stat), YELLOW,true);
-    if (_stat > 300)
+    if (_stat > 200)
     {
         log.print(INFO,"=> ERROR IN REQUEST: Creating error page:" + std::to_string(_stat),RED,true);
         createErrorPage(_stat);
@@ -184,7 +187,7 @@ void Response::build_body()
         log.print(INFO,"=> METHOD NOT ALLOWED",RED,true);
         _stat = 501;
     }
-    if (_stat > 300)
+    if (_stat > 200)
     {
         log.print(INFO,"Creating error page:" + std::to_string(_stat),RED,true);
         createErrorPage(_stat);
@@ -201,7 +204,7 @@ void Response::build_body()
         if (!method_Delete())
             return;
     }
-    if (_stat > 300)
+    if (_stat > 200)
     {
         log.print(INFO,"Creating error page:" + std::to_string(_stat),RED,true);
         createErrorPage(_stat);
@@ -255,25 +258,31 @@ int Response::method_Delete(){
     return 0;
 }
 
-//return 0 if post ok, 1 if not.
+//return 0 if post ok, 1 if not. devuelve en el body el body que recibe
 int Response::method_Post(){
     //file exits? 
     File tmp_file;
-    std::string ext_file;
-    ext_file = _request._config.get_root() + "/"+ _request._config.get_upload()+"/"+_request.get_fileName();
+    std::string ext_file, loc_file;
+    ext_file = _request._config.get_root() + _request._config.get_upload()+"/"+_request.get_fileName();
+    loc_file = _request._config.get_upload()+"/"+_request.get_fileName();
     log.print(INFO,"path file to upload: " + ext_file, YELLOW,true);
     tmp_file.set_path(ext_file);
     std::string str = _request.get_body();
     _body = str;
     pthread_mutex_lock(&g_write);
     if(!tmp_file.exists()){     // no -> file create (body) --> code 201
+        log.print(INFO,"Creating file : " + ext_file, YELLOW,true);
         tmp_file.create(str);
-        //this->_status = "201 OK";
-        _stat = 201;
+        _response_headers["Location"] = loc_file ;
+        if (_request.get_isChunked() == 1)
+            _stat = 226;
+        else
+            _stat = 201;
     }
     else {                      // si -> file append (body) --> code 200
+         log.print(INFO,"Append to file : " + ext_file, YELLOW,true);
         tmp_file.append(str);
-        //this->_status = "200 OK";
+        _response_headers["Location"] = loc_file ;
         _stat = 200;
     }
     pthread_mutex_unlock(&g_write);
@@ -286,9 +295,13 @@ int Response::method_Get(){
     //if directory and autoindex --> look for autoindex, change header Content_Type = html
     if (_request._config.get_autoindex()=="on" && _request.get_isFile() == false) // &&is directory
     {
+        log.print(INFO,"IS a Autoindex:" +  _request._config.get_root() + " " + _request.get_pathInfo(),GREEN,true);
         std::string root = _request._config.get_root();
         std::string path = _request.get_pathInfo();
+        if (path == "/")
+            path = "";
         _body = autoindex(root, path);
+        std::cout << _body << std::endl;
         return 0;
     }
     else   //is a file or a path?
@@ -329,7 +342,7 @@ int Response::method_Get(){
             //_file.set_path(_request._config.get_root() + _request.get_pathCGI() + "/" + _request.get_fileCGI());
         }
         else //is a path must join default index.html
-            _file.set_path(_request._config.get_root() + "/"  + _request.get_pathInfo() + "/" + _request._config.get_index());
+            _file.set_path(_request._config.get_root() + _request.get_pathInfo() + "/" + _request._config.get_index());
         log.print(INFO,"path to file: "+ _file.getPath() ,GREEN,true); 
         // if the file not exit error 404
         if (!_file.exists()){
@@ -358,7 +371,7 @@ std::string Response::autoindex(std::string &root, std::string &path){
     struct dirent *ent;
 
     std::string target;
-    target = root + "/" +_request.get_pathInfo();
+    target = root +_request.get_pathInfo();
     dir = opendir(target.c_str());
 
     //title
@@ -432,6 +445,7 @@ std::string Response::autoindex(std::string &root, std::string &path){
     body += "</pre><hr></body>\r\n";
     body += "</html>\r\n";
     closedir(dir);
+    _stat = 200;
     return body;
 }
 

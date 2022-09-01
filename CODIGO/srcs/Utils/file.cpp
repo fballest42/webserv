@@ -21,7 +21,7 @@ bool File::open(bool create) {
     _fd = ::open(_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, 00755);
   else
     _fd = ::open(_path.c_str(), O_RDONLY);
-  log.print(DEBUG, "create fd from file: " + std::to_string(_fd) + " of " + _path, RED, true);
+  log.print(DEBUG, "create fd from file: " + std::to_string(_fd) + " of " + _path, GREEN, true);
 
   return _fd > 0;
 }
@@ -43,12 +43,13 @@ void File::unlink(){
 
 void File::create(std::string &body) {
   if (!open(true)){
-    log.print(INFO,"create:"+ std::string(strerror(errno)) + "of" + _path ,RED,true); 
+    log.print(INFO,"error create:"+ std::string(strerror(errno)) + "of" + _path ,RED,true); 
     return;
   }
   if (body.length() && write(_fd, body.c_str(), body.length()) <= 0){
      log.print(INFO,"create:"+ std::string(strerror(errno)) + "of" + _path ,RED,true); 
   }
+  log.print(INFO,"FINISH create FILE" + std::to_string(body.length()),GREEN,true); 
 }
 
 void File::append(std::string &body) {

@@ -1,4 +1,33 @@
 #include "utils.hpp"
+#include <algorithm>
+#include <cctype>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <vector>
+
+float time_diff2(struct timespec *start, struct timespec *end){
+    return (end->tv_sec - start->tv_sec) + 1e-9*(end->tv_nsec - start->tv_nsec);
+}
+// Up to capitalize
+void capitalizeString(const std::string& in, std::string& out)
+{
+    std::string::const_iterator b = in.begin(), e = in.end(); 
+    // skipping leading spaces 
+    std::string tmp;
+    while (b != e)
+    {
+        //std::cout << (*b) << " " << (char)std::toupper(*b) << std::endl;
+        tmp.push_back(std::tolower(*b));
+        //std::cout << tmp << std::endl;
+        b++;
+    } 
+    //tmp.push_back(0);
+    std::string::const_iterator init = tmp.begin(), end = tmp.end(); 
+    out.assign(init, end); 
+}
+
+//std::string lowerString()
 
 // Check if c is a space
 bool isSpace(char c)
@@ -32,6 +61,23 @@ void strip(const std::string& in, std::string& out)
         { --e; } 
     } 
     out.assign(b, e); 
+}
+
+std::string ft_clean_token(const std::string& in)
+{
+    std::string::const_iterator b = in.begin(), e = in.end(); 
+    // skipping leading spaces 
+    std::string out;
+
+    while (b != e)
+    {
+        //std::cout << (*b) << " " << (char)std::toupper(*b) << std::endl;
+        if (!isSpace(*(b)) && !isTab(*(b)) )
+            out.push_back(std::tolower(*b));
+        //std::cout << tmp << std::endl;
+        b++;
+    } 
+    return out;
 }
 
 // Give the number of tokens split with delimiter string
