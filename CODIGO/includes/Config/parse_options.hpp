@@ -13,6 +13,7 @@
 #include <string> 
 #include "custom_exception.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
 
 //Calse para guardar la configuración de un servidor
 class Parse_options
@@ -24,6 +25,7 @@ class Parse_options
         bool            _help;
         bool            _uri;
         int             _level;
+        bool            _test;
     public:
         Parse_options(int argc, char **argv);
         ~Parse_options();
@@ -34,4 +36,5 @@ class Parse_options
         bool test();
         bool location();
         std::string helpText(void);
+        bool get_test(void){return _test;};
 };

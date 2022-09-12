@@ -14,6 +14,14 @@
 //  -cgi_bin folder_path; (default ./cgi-bin)    //define a folder where to search CGI binaries
 //  -client_max_body_size ....; //define max body size
 //  -location
+
+// ERRORS:
+// root -> only one value if multiple definition take the last one
+// upload -> only one value if multiple definition take the last one
+// client_max_body_size one value if multiple definition take the last one
+// autoindex only one value: on/off.
+// Check is integer in port error_page client_max_body
+
 #include "config.hpp"
 
 extern Logger log;
@@ -39,11 +47,121 @@ std::string Config::get_root(void)
 std::string Config::get_index(void)
 { return (_index.at(0)); }
 
-
+bool Config::check_location(std::map<std::string, std::vector<std::string> >  locations)
+{
+    for (std::map<std::string, std::vector<std::string> >::iterator it=locations.begin(); it!=locations.end(); ++it)
+    {
+        int c = 0;
+        bool is_valid;
+        std::string token;
+        std::string location;
+        std::vector<std::string> location_vector;
+        int n_tokens;
+        int n_cgi_bin = 0;
+        bool size  = false;
+        bool root_exits = false;
+        std::vector<std::string> vector_cfg = it->second;
+        while(c < vector_cfg.size())
+        {
+            token = get_token(vector_cfg.at(c), ' ', 0); //first token
+            n_tokens = nb_tokens(vector_cfg.at(c), ' ');
+            is_valid = false;
+            if (token == "cgi" && n_tokens == 3)   //defines files that will be executed for given extension "cgi .sh sh;
+               is_valid = true; 
+            if (token == "cgi-bin" && n_tokens == 2)   //(default ./cgi-bin)    //define a folder where to search CGI binaries "cgi_bin folder_path;
+            {   
+                n_cgi_bin ++;
+                if (n_cgi_bin > 1) 
+                    is_valid = false;
+                else {
+                    is_valid = true;
+                }
+            }
+            if (token == "error_page" && n_tokens == 3)   //check number of tokens pendiente
+                {
+                    if (!is_number(get_token(_vector_cfg.at(c), ' ', 1)))
+                    {
+                        log.print(INFO," [ERROR: Config file: error code page is not a number]",RED,true);
+                        return(false);
+                    } 
+                    is_valid = true;
+                }   
+            if (token == "root") //&& n_tokens == 2)   //check number of tokens pendiente
+                {
+                    if   (n_tokens > 2)        
+                    {
+                        log.print(INFO," [ERROR: Config file: double value in 'root' directive]",RED,true);
+                        return(false);
+                    }
+                    root_exits = true;
+                    is_valid = true;
+                }
+            if (token == "index" && n_tokens == 2)   //check number of tokens pendiente
+                {   
+                    int cont = 1;
+                    while (cont < nb_tokens(vector_cfg.at(c),' '))
+                        cont++;
+                    is_valid = true;
+                }
+            if (token == "autoindex" && n_tokens == 2)   //check number of tokens pendiente
+                {            
+                    if   (n_tokens > 2)        
+                    {
+                        log.print(INFO," [ERROR: Config file: double value in 'autoindex' directive]",RED,true);
+                        return(false);
+                    }
+                    if (get_token(vector_cfg.at(c), ' ', 1) != "on" && get_token(vector_cfg.at(c), ' ', 1) != "off")
+                    {
+                        log.print(INFO," [ERROR: Config file: unknown value in 'autoindex' directive]",RED,true);
+                        return(false);
+                    }
+                    is_valid = true;
+                }
+            if (token == "upload") // && n_tokens == 2)   //only one;
+                {
+                    if   (n_tokens > 2)      
+                    {
+                        log.print(INFO," [ERROR: Config file: double value in 'upload' directive]",RED,true);
+                        return(false);
+                    }
+                    is_valid = true;
+                }
+            if (token == "client_max_body_size" && n_tokens == 2)   //check number of tokens pendiente
+                { 
+                    if   (n_tokens > 2) 
+                    {
+                        log.print(INFO," [ERROR: Config file: double value in 'client_max_body_size' directive]",RED,true);
+                        return(false);
+                    }
+                    if (!is_number(get_token(vector_cfg.at(c), ' ', 1)))
+                    {
+                        log.print(INFO," [ERROR: Config file: client_max_body_size is not a number]",RED,true);
+                        return(false);
+                    } 
+                    size = true;
+                    is_valid = true;
+                } 
+            if (token == "limit_except")
+                {
+                    int cont = 1;
+                    while (cont < nb_tokens(vector_cfg.at(c), ' '))
+                        cont++;
+                    is_valid = true;
+                }
+            if (is_valid == false)
+            {
+                log.print(INFO," [ERROR: Config file: directive not valid -> " + token + "]",RED,true);
+                return(false);
+            }
+            c++;
+        }
+    }
+    
+    return true;
+}
 // si correcto true else false
 int Config::parse(void)
 {
-       // get tokens
     int c = 0;
     bool is_valid;
     std::string token;
@@ -52,6 +170,7 @@ int Config::parse(void)
     int n_tokens;
     int n_cgi_bin = 0;
     bool size  = false;
+    bool root_exits = false;
 
     while(c < _vector_cfg.size())
     {
@@ -60,6 +179,11 @@ int Config::parse(void)
         is_valid = false;
         if (token == "listen" && n_tokens == 2)   //check number of tokens pendiente
             {
+                if (!is_number(get_token(_vector_cfg.at(c), ' ', 1)))
+                {
+                    log.print(INFO," [ERROR: Config file: port is not a number]",RED,true);
+                    return(false);
+                }    
                 _ports.push_back(stoi(get_token(_vector_cfg.at(c), ' ', 1)));
                 is_valid = true;
             }
@@ -84,24 +208,28 @@ int Config::parse(void)
         }
         if (token == "error_page" && n_tokens == 3)   //check number of tokens pendiente
             {
+                if (!is_number(get_token(_vector_cfg.at(c), ' ', 1)))
+                {
+                    log.print(INFO," [ERROR: Config file: error code page is not a number]",RED,true);
+                    return(false);
+                } 
                 _error_pages[stoi(get_token(_vector_cfg.at(c), ' ', 1))] = get_token(_vector_cfg.at(c), ' ', 2);
                 is_valid = true;
             }   
-        if (token == "root" && n_tokens == 2)   //check number of tokens pendiente
+        if (token == "root") //&& n_tokens == 2)   //check number of tokens pendiente
             {
                 if   (n_tokens > 2)        
                 {
-                    throw WebServer_Exception("double value in 'root' directive");
+                    log.print(INFO," [ERROR: Config file: double value in 'root' directive]",RED,true);
                     return(false);
                 }
                 _root = (get_token(_vector_cfg.at(c), ' ', 1));
+                root_exits = true;
                 is_valid = true;
             }
         if (token == "server_name" )   //check number of tokens pendiente
             {
                 int cont = 1;
-                //std::cout << " => " << nb_tokens(_vector_cfg.at(c)," ") << '\n';
-    
                 while (cont < nb_tokens(_vector_cfg.at(c), ' '))
                 {   _server_names.push_back(get_token(_vector_cfg.at(c), ' ', cont));
                     cont++;
@@ -124,22 +252,25 @@ int Config::parse(void)
             {            
                 if   (n_tokens > 2)        
                 {
-                    throw WebServer_Exception("double value in 'autoindex' directive");
+                    log.print(INFO," [ERROR: Config file: double value in 'autoindex' directive]",RED,true);
+                    //throw WebServer_Exception("double value in 'autoindex' directive");
                     return(false);
                 }
                 if (get_token(_vector_cfg.at(c), ' ', 1) != "on" && get_token(_vector_cfg.at(c), ' ', 1) != "off")
                 {
-                    throw WebServer_Exception("unknown value in 'autoindex' directive");
+                    log.print(INFO," [ERROR: Config file: unknown value in 'autoindex' directive]",RED,true);
+                    //throw WebServer_Exception("unknown value in 'autoindex' directive");
                     return(false);
                 }
                 _autoindex = get_token(_vector_cfg.at(c), ' ', 1);
                 is_valid = true;
             }
-        if (token == "upload" && n_tokens == 2)   //only one;
+        if (token == "upload") // && n_tokens == 2)   //only one;
             {
                 if   (n_tokens > 2)      
                 {
-                    throw WebServer_Exception("double value in 'upload' directive");
+                    log.print(INFO," [ERROR: Config file: double value in 'upload' directive]",RED,true);
+                    //throw WebServer_Exception("double value in 'upload' directive");
                     return(false);
                 }
                 _upload  = get_token(_vector_cfg.at(c), ' ', 1);
@@ -153,11 +284,16 @@ int Config::parse(void)
             { 
                 if   (n_tokens > 2) 
                 {
-                    throw WebServer_Exception("double value in 'client_max_body_size' directive");
+                    log.print(INFO," [ERROR: Config file: double value in 'client_max_body_size' directive]",RED,true);
+                    //throw WebServer_Exception("double value in 'client_max_body_size' directive");
                     return(false);
                 }
-                // meter try catch if not number........
-                _client_max_body_size = (stoi(get_token(_vector_cfg.at(c), ' ', 1)));
+                if (!is_number(get_token(_vector_cfg.at(c), ' ', 1)))
+                {
+                    log.print(INFO," [ERROR: Config file: client_max_body_size is not a number]",RED,true);
+                    return(false);
+                } 
+                _client_max_body_size = (stol(get_token(_vector_cfg.at(c), ' ', 1)));
                 size = true;
                 is_valid = true;
             } 
@@ -175,7 +311,12 @@ int Config::parse(void)
            if (get_token(_vector_cfg.at(c), ' ', 1) == "/")
                 location = "/";
             else
+            {
+                std::string loc = get_token(_vector_cfg.at(c), ' ', 1);
+                if (loc[loc.size()-1]=='/')
+                    loc.pop_back();
                 location = get_token(_vector_cfg.at(c), ' ', 1);
+            }
            c ++;
            while (1)
            {
@@ -191,14 +332,23 @@ int Config::parse(void)
         
         if (is_valid == false)
         {
-            std::cout << token << " " << n_tokens << std::endl;
-            throw WebServer_Exception("directive not valid: ");
+            log.print(INFO," [ERROR: Config file: directive not valid -> " + token + "]",RED,true);
             return(false);
         }
         c++;
     }
-    /// MUST DEFINE ROOT
-    
+
+    //CHECK LOCATIONS
+    if (!check_location(_locations))
+        return false;
+
+
+    /// MUST DEFINE ROOT ???????
+    // if (!root_exits){
+    //      log.print(INFO," [ERROR: Config file: no root found]",RED,true);
+    //      return(false);
+    // }
+
     /// DEFAULT VALUE OF INDEX FILE COULD BE SEVERAL
  
     //// SETTING DEFAULT VALUES 
@@ -214,7 +364,7 @@ int Config::parse(void)
     if (_index.empty())
         _index.push_back("index.html");
     if (!size)
-        _client_max_body_size=1024; //NGINX dfault size
+        _client_max_body_size=30000000000; //NGINX dfault size?
     return(true);
 }
 

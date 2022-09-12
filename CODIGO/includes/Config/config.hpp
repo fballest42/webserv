@@ -31,7 +31,7 @@ class Config
         std::map<std::string, std::string>  _cgi;
         std::string                         _cgi_bin;       //pdte
         std::map<int ,std::string>          _error_pages;
-        int                                 _client_max_body_size; 
+        long                                 _client_max_body_size; 
         std::map<std::string, std::vector<std::string> >   _locations;
         std::vector<std::string>            _limits_except;  
 
@@ -46,9 +46,11 @@ class Config
         std::string get_autoindex(void){return _autoindex;};
         std::string get_cgi_bin(void){return _cgi_bin;};
         std::string get_upload(void){return _upload;};
-        int get_client_max_body_size(void){return _client_max_body_size;};
+        int get_nb(void){return _nb;};
+        long get_client_max_body_size(void){return _client_max_body_size;};
         std::vector<int>  get_ports(void){return _ports;};
         int parse(void);
+        bool check_location(std::map<std::string, std::vector<std::string> >  locations);
         void show_config();
         void show_index(void);
         void show_autoindex(void);

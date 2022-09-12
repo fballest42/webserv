@@ -3,7 +3,7 @@
 extern Logger log;
 
 CGI::CGI(Request &request): _request(request), _file(request.get_fileName()), _config(request._config){
-  log.print(INFO,"server : >>  init cgi",BLUE,true);
+  log.print(INFO,"server : >>  Init cgi",BLUE,true);
   //req_body_ = file_.getContent();
 }
 
@@ -21,7 +21,7 @@ CGI::~CGI() {
     free(_env);
   }
   _tmp_file.close();
-  //_tmp_file.unlink();
+  _tmp_file.unlink();
 }
 
 void CGI::init(int worker_id) {
@@ -43,7 +43,7 @@ void CGI::init(int worker_id) {
   _tmp_file.set_path(cgi_path.c_str());
   _tmp_file.open(true);
 
-  log.print(DEBUG, "server : CGI -> " + this->_request._config.get_cgi_bin());
+  //log.print(DEBUG, "server : CGI -> " + this->_request._config.get_cgi_bin(),BLUE,true);
 }
 // Set the envionment variables 
 bool CGI::setCGIEnv() {
@@ -54,10 +54,13 @@ bool CGI::setCGIEnv() {
     std::transform(str.begin(), str.end(), str.begin(), ::toupper);
     std::string tmp;
     strip(it->second, tmp);
+    std::string value_tmp;
+    value_tmp = tmp;
+    std::transform(value_tmp.begin(), value_tmp.end(), value_tmp.begin(), ::toupper);
     std::string header = "HTTP_" + str;
     std::replace(header.begin(), header.end(), '-', '_');
-    _cgi_env[header] = tmp;
-    std::cout << "/////////////////////////////////////" << it->second << "////" << std::endl;
+    _cgi_env[header] = value_tmp;
+    //std::cout << "/////////////////////////////////////" << it->second << "////" << std::endl;
   }
 
   //_cgi_env["COMSPEC"] = "CGI/1.1";
@@ -106,9 +109,9 @@ bool CGI::setCGIEnv() {
 		i++;
 	}
 	_env[i] = NULL;
-  std::cout << "-- CGI _ ENV ----" << std::endl;
-  for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it!=_cgi_env.end(); ++it)
-    std::cout << it->first << " => " << it->second << '\n';
+  // std::cout << "-- CGI _ ENV ----" << std::endl;
+  // for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it!=_cgi_env.end(); ++it)
+  //   std::cout << it->first << " => " << it->second << '\n';
   return true;
 }
 /*
@@ -155,8 +158,8 @@ int CGI::execute() {
   // Build absolute path to access CGI file 
   // std::string file_p = this->_current_directory + "/" + this->_request._config.get_root() + "/" + this->_request._config.get_cgi_bin() + "/";
   std::string file_p = this->_current_directory + "/" + this->_request._config.get_cgi_bin() + "/";
-  log.print(INFO,"server : >>  Complete path of cgi file " + this->_request.get_fileName() ,BLUE,true);
-  log.print(INFO,"server : >>  cgi file  " + file_p ,BLUE,true);
+  //log.print(INFO,"server : >>  Complete path of cgi file " + this->_request.get_fileName() ,BLUE,true);
+  log.print(INFO,"[CGI file detected:" + file_p + this->_request.get_fileName()+"]",BLUE,true);
   
   // Set Enviroment
   if (!setCGIEnv())
@@ -165,7 +168,7 @@ int CGI::execute() {
   // Set arguments for execve
   if (!(_argv[0] = strdup(this->_request.get_fileName().c_str()))) // p.e "py_program.py"
     return 500;
-  if (!(_argv[1] = _argv[1] = strdup(this->_request.get_query().c_str()))) // p.e "key=value"
+  if (!(_argv[1] = strdup(this->_request.get_query().c_str()))) // p.e "key=value"
     return 500;
   _argv[2] = NULL;
 
@@ -177,8 +180,8 @@ int CGI::execute() {
 
   pid_t pid = fork();
 
-  if (pipe(pip) != 0)
-    return 500;
+  // if (pipe(pip) != 0)
+  //   return 500;
   if (pid == 0) {
     if (chdir(file_p.c_str()) == -1)
       return 500;
@@ -200,7 +203,7 @@ int CGI::execute() {
     if (waitpid(pid, &status, 0) == -1)
       return 500;
     if (WIFEXITED(status) && WEXITSTATUS(status))
-      return 502;
+      return 999;
   }
   else {
     return 502;

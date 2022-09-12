@@ -15,6 +15,8 @@
 #include <sys/stat.h>
 #include <algorithm>
 
+bool is_number(const std::string& s);
+
 float time_diff2(struct timespec *start, struct timespec *end);
 
 void capitalizeString(const std::string& in, std::string& out);

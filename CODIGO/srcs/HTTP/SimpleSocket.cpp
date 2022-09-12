@@ -29,7 +29,7 @@ SimpleSocket::SimpleSocket(int domain, int service, int protocol)
     {
             throw std::string("SetSockopt Failed");
     }
-    //setNonBlockingFD(_sock);
+    setNonBlockingFD(_sock);
 }
 
 //Test connection virtual function

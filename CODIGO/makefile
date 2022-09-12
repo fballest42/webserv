@@ -26,7 +26,7 @@ OBJS				= ${SRCS:.cpp=.o}
 INCLUDES		= -I includes/Config -I includes/Utils -I includes/HTTP
 
 CC					= clang++
-CFLAGS 				= -std=c++98 -pthread
+CFLAGS 				= -std=c++98 -pthread -fsanitize=address -g3
 RM					= rm -f
 
 all:				$(NAME)

@@ -19,23 +19,20 @@ class Request {
   private:
     std::string _buffer;
     std::string _protocol;
-    
-    std::map<std::string, std::string> _request_entity;
     std::string _body;
     int         _content_length;
     int         _body_offset;
     bool        _is_chunked;
-    struct timeval _start_timer;
-    struct timeval _last_timer;
     std::string _target;
     std::string _query_string;
     std::string _fileName;
-    //std::string _pathCGI;
     std::string _method;
     bool        _isFile;
     std::string _pathInfo;
     std::string _pathAfter;
     std::string _actualLocation;
+    struct timeval _start_timer;
+    struct timeval _last_timer;
 
 
   public:
@@ -56,7 +53,6 @@ class Request {
     std::string get_protocol(){return _protocol;}
     std::string get_target(){return _target;}
     std::string get_fileName(){return _fileName;}
-    //std::string get_pathCGI(){return _pathCGI;}
     std::string get_query(){return _query_string;}
     std::string get_pathInfo(){return _pathInfo;}
     std::string get_pathAfter(){return _pathAfter;}
@@ -71,27 +67,6 @@ class Request {
     time_t get_start_timer_in_sec();
     time_t get_last_timer_in_sec();
     void show_request_data();
-  /*
-  int chunk();
-  int chunk_trailer();
-
-  int getStatus();
-
-  enum Status {
-    FIRST_LINE,
-    HEADERS,
-    PREBODY,
-    BODY,
-    CHUNK,
-    COMPLETE,
-    ERROR
-  };
-
-  enum ChunkStatus {
-    CHUNK_BODY,
-    CHUNK_SIZE,
-  };
-  */
 };
 
 #endif

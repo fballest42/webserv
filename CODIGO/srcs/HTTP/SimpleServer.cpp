@@ -3,40 +3,16 @@
 
 extern Logger log;
 extern Error_page err_page;
-/*
-//Structure for passing arguments to threads
-struct Server {
-    int         _id;
-    Config      _conf;
-    pthread_t   _thr;
-};
 
-std::vector<Server> g_servers;
-
-void *start_server(void *arg)
-{
-    SimpleServer myserver(AF_INET, SOCK_STREAM, IPPROTO_TCP,  ((Server*)arg)->_conf, INADDR_ANY);
-    myserver.launch();
-    return NULL;
-}
-*/
-/*
-void *start_server(void *arg)
-{
-    SimpleServer myserver(AF_INET, SOCK_STREAM, IPPROTO_TCP,  ((Server*)arg)->_conf, INADDR_ANY);
-    myserver.launch();
-    return NULL;
-}
-*/
 void *server_port_launch(void *arg)
 {
     //load arguments
     int _server_socket = ((Server_port*)arg)->_server_socket;
-    struct sockaddr_in _address = ((Server_port*)arg)->_address;
+    struct sockaddr_in  _address = ((Server_port*)arg)->_address;
     int                 _addresslen = ((Server_port*)arg)->_addresslen;
-    char                _buffer[30000]; // = ((Server_port*)arg)->_buffer;
-    Config      _config = ((Server_port*)arg)->_config;
-    int         _port =  ((Server_port*)arg)->_port;
+    char                _buffer[1025];
+    Config              _config = ((Server_port*)arg)->_config;
+    int                 _port =  ((Server_port*)arg)->_port;
 
     fd_set master;    // master file descriptor list
     fd_set read_fds;  // temp file descriptor list for select()
@@ -44,6 +20,9 @@ void *server_port_launch(void *arg)
     int fdmin;        // maximum file descriptor number
     int client_socket;
     int nbytes;
+
+    std::string         request_string;
+
      
      //setNonBlockingFD(_server_socket);//Not blocking socket of server
      
@@ -55,16 +34,15 @@ void *server_port_launch(void *arg)
     // keep track of the biggest number file descriptor
     fdmax = _server_socket; // so far, it's this one
     fdmin = _server_socket; // so far, it's this one
-    //std::cout << "fdmax:" << fdmax << std::endl;
 
     std::map< int , struct timespec> _start_time_connection;
 
     int i, j, rv;
+    log.print(INFO,"Waiting for connections in Server " + std::to_string(_config._nb) + " in port: " + std::to_string(_port) ,GREEN,true);
     while(1)
     {
         //char _buffer[30000];
         read_fds = master; // copy master to read_fs
-        log.print(INFO,"Waiting for connections in Server " + std::to_string(_config._nb) + " in port: " + std::to_string(_port) ,GREEN,true);
         if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {  // Select wait to something happens (new client connect, old client connect, close connected cliente)
             perror("select");
             exit(4);
@@ -81,7 +59,7 @@ void *server_port_launch(void *arg)
                     } 
                     else 
                     {
-                        std::cout << "new socket" << client_socket << std::endl;
+                        //std::cout << "new socket" << client_socket << std::endl;
                         FD_SET(client_socket, &master); // add new clsocket client to master
                         if (client_socket > fdmax) {    // keep track of the max sockets
                             fdmax = client_socket;
@@ -97,69 +75,64 @@ void *server_port_launch(void *arg)
 
                         //--- Aqui empieza el tiempo de conexión
                         //std::map< int , struct timeval> 
-                        struct timespec start_time;
-                        clock_gettime(CLOCK_REALTIME, &start_time);
-                        //gettimeofday(&start_time, NULL); //get time and store in start_timer
-                        _start_time_connection[client_socket] = start_time;
-                        log.print(INFO,"Set Time: " ,RED,true); 
+                        // struct timespec start_time;
+                        // // clock_gettime(CLOCK_REALTIME, &start_time);
+                        // //gettimeofday(&start_time, NULL); //get time and store in start_timer
+                        // _start_time_connection[client_socket] = start_time;
+                        //log.print(INFO,"Set Time: " ,RED,true); 
                     }
                 } 
                 else 
                 {   // handle data from a old client
                     //Check time of connection
-                    struct timespec current_time_connection;
-                    clock_gettime(CLOCK_REALTIME, &current_time_connection);
-                    if (time_diff2(&_start_time_connection[i], &current_time_connection) > 10.0)
+                    // struct timespec current_time_connection;
+                    // clock_gettime(CLOCK_REALTIME, &current_time_connection);
+                    // if (time_diff2(&_start_time_connection[i], &current_time_connection) > 10.0)
+                    // {
+                    //     printf("loop Func  time spent: %0.8f sec\n", time_diff2(&_start_time_connection[i], &current_time_connection));
+                    //     log.print(INFO,"Rise Time",RED,true); 
+                    //     // close(i); // bye!
+                    //     // log.print(INFO,"Connection closed",GREEN,true);
+                    //     // FD_CLR(i, &master); // remove socket from master set
+                    // }                    
+                    request_string.clear();
+                    while ((nbytes = recv(i, _buffer, (sizeof _buffer) - 1, 0)) > 0)  /* Hay un error en la lectura. Posiblemente el cliente ha cerrado la conexión. Hacer aquí el tratamiento. En el ejemplo, se cierra el socket y se elimina del array de socketCliente[] */
                     {
-                        printf("loop Func  time spent: %0.8f sec\n", time_diff2(&_start_time_connection[i], &current_time_connection));
-                        log.print(INFO,"Rise Time",RED,true); 
-                        // close(i); // bye!
-                        // log.print(INFO,"Connection closed",GREEN,true);
-                        // FD_CLR(i, &master); // remove socket from master set
-                    }                    
-                    if ((nbytes = recv(i, _buffer, sizeof _buffer, 0)) <= 0)  /* Hay un error en la lectura. Posiblemente el cliente ha cerrado la conexión. Hacer aquí el tratamiento. En el ejemplo, se cierra el socket y se elimina del array de socketCliente[] */
-                    {   // got error or connection closed by client
-                        if (nbytes == 0) {
-                            // connection closed
-                            printf("selected server: socket %d hung up\n", i);
-                        } else {
-                            perror("recv");
-                        }
-                        close(i); // bye!
-                        log.print(INFO,"Connection closed",GREEN,true);
-                        FD_CLR(i, &master); // remove socket from master set
-                    } 
-                    else
-                    {   // we got some data from a client  /* Se ha leido un dato del cliente correctamente. Hacer aquí el tratamiento para ese mensaje. En el ejemplo, se lee y se escribe en pantalla. */
-                        std::cout << _buffer << std::endl;
-
+                        // got error or connection closed by client
+                        // we got some data from a client  
+                        // std::cout << _buffer << std::endl;
                         // Checking the request
+                        _buffer[nbytes] = '\0';
+                        request_string += _buffer;
+//                        std::cout << "nbytes = " << nbytes << " sizeof buffer : " << (sizeof _buffer) - 1 << std::endl;
+//                        std::cout << "requests_string.size = " << request_string.size() << " -- nbytes condition = " << (nbytes < (sizeof _buffer) -1) << std::endl;
+                    }
+                    if (nbytes == -1) // EAGAIN)
+                    {
+//                        std::cout << "nbytes = " << nbytes << " : errno = " << errno << std::endl;
+//                        std::cout << "errno " << errno << std::endl;
                         Request newrequest(_config);
-                        std::string request_string(_buffer);
                         int result = newrequest.parse(request_string);  //compruebo request result = error
-                        newrequest.show_request_data();
-                        //_config.show_limit_except();
-                        log.print(INFO,"Response check:" + std::to_string(result),RED,true);
-
-                        //char *hello = "HTTP/1.0 200 OK\r\nContent-Length: 11\r\nContent-Type: text/html; charset=UTF-8\r\n\r\nHello World\r\n";//IMPORTANT! WE WILL GET TO IT
-                        // RESPONSE
-                        
-                        //log.print(INFO,"TEST",RED,true);
+                        //newrequest.show_request_data();
+                        log.print(INFO,"<< [method: " + newrequest.get_method() + "] [target: "+ newrequest.get_target() +"] [server: " + std::to_string(newrequest._config._nb) + "] [location: " + newrequest.get_actualLocation() +"] + ret:" + std::to_string(result),YELLOW,true);
                         if (FD_ISSET(i, &master)) { 
-                            log.print(INFO,"----------- STARTING RESPONSE -----------",YELLOW,true);
+                            //log.print(INFO,"----------- STARTING RESPONSE -----------",YELLOW,true);
                             Response newresponse(newrequest, result);
-                            //log.print(INFO,"TEST",RED,true);
                             if (newresponse.sendResponse(i) == -1) {
                                 perror("send");
                             }
-                            log.print(INFO,"Response sent",GREEN,true);    
-                            //close(i); // bye!
-                            //log.print(INFO,"Connection closed",GREEN,true);
-                            //FD_CLR(i, &master); // remove socket from master set
-                        }  
-                                            
-                    }
-                
+                            //log.print(INFO,"Response sent",GREEN,true);    
+//                                close(i); // bye!
+//                                log.print(INFO,"Connection closed",GREEN,true);
+//                                FD_CLR(i, &master); // remove socket from master set    
+                        }
+                    }                      
+//                    else {
+//                        perror("recv");
+//                    }
+                    close(i); // bye!
+                    log.print(INFO,"Connection closed",GREEN,true);
+                    FD_CLR(i, &master); // remove socket from master set
                 } // END handle data from client
             }
         } // END got new incoming connection
@@ -171,11 +144,12 @@ SimpleServer::SimpleServer(int domain, int service, int protocol, Config mconfig
 {
     
     int total_ports = _config.get_ports().size();
-    log.print(INFO,"Starting Port in Server",GREEN,true);
+    
     _server_port.resize(total_ports);   
     
     for (int j = 0; j < total_ports; j++)
     {
+        log.print(INFO,"Starting Port: "+ std::to_string(_config.port(j)) + " in Server " + std::to_string(_config._nb),GREEN,true);
         _server_port[j]._id = j;  
         _server_port[j]._port = _config.port(j);                       
         _server_port[j]._config = _config;
@@ -248,126 +222,6 @@ SimpleServer::SimpleServer(int domain, int service, int protocol, Config mconfig
  
 }
 
-
-void SimpleServer::launch(void)
-{
-    /*
-    log.print(INFO,"Starting Servers",GREEN,true);
-    g_servers.resize(my_cluster.get_nb_servers());                              // resize to the number of servers
-    for (int i = 0; i < my_cluster.get_nb_servers(); i++)
-    {
-        g_servers[i]._id = i;                                                   // pass the number of the server
-        g_servers[i]._conf = my_cluster.get_server(i);                          //
-        pthread_create(&g_servers[i]._thr,NULL, start_server ,&g_servers[i]);
-        usleep(500);
-    }
-    for (int i = 0; i < my_cluster.get_nb_servers(); i++)
-    {
-        pthread_join(g_servers[i]._thr,NULL);
-    }
-    */
-    fd_set master;    // master file descriptor list
-    fd_set read_fds;  // temp file descriptor list for select()
-     int fdmax;        // maximum file descriptor number
-     int fdmin;        // maximum file descriptor number
-     int client_socket;
-     int nbytes;
-     
-     //setNonBlockingFD(_server_socket);//Not blocking socket of server
-     
-    FD_ZERO(&master);    // clear the master sets
-    FD_ZERO(&read_fds); // clear the temp sets
-    // add the listener to the master set
-    FD_SET(_server_socket, &master);
-    // keep track of the biggest number file descriptor
-    fdmax = _server_socket; // so far, it's this one
-    fdmin = _server_socket; // so far, it's this one
-    //std::cout << "fdmax:" << fdmax << std::endl;
-    int i, j, rv;
-    while(1)
-    {
-        //char _buffer[30000];
-        read_fds = master; // copy master to read_fs
-        log.print(INFO,"Waiting for connections in Server " + std::to_string(_config._nb),GREEN,true);
-        if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {  // Select wait to something happens (new client connect, old client connect, close connected cliente)
-            perror("select");
-            exit(4);
-        }
-        // run through the existing connections looking for data to read
-        for(i = 0 ; i <= fdmax; i++)
-        {
-            if (FD_ISSET(i, &read_fds)) { // we got one!! /* Un nuevo cliente solicita conexión. Aceptarla aquí. En el ejemplo, se acepta la conexión, se mete el descriptor en socketCliente[] y se envía al cliente su posición en el array como número de cliente. */
-                if (i == _server_socket) { // handle new connections, it is a new connection
-                    if ((client_socket = accept(_server_socket, (struct sockaddr *)&_address, (socklen_t*)&_addresslen))<0) 
-                    {
-                        perror("Error accepting connection");
-                        exit(EXIT_FAILURE);
-                    } 
-                    else 
-                    {
-                        std::cout << "new socket" << client_socket << std::endl;
-                        FD_SET(client_socket, &master); // add new clsocket client to master
-                        if (client_socket > fdmax) {    // keep track of the max sockets
-                            fdmax = client_socket;
-                        }
-                        sockaddr_in client_addr;
-                        socklen_t alen = sizeof(client_addr);
-                        getpeername(_server_socket,(struct sockaddr *)&client_addr, &alen);
-                        std::string a(inet_ntoa(client_addr.sin_addr));
-                        std::string b= std::to_string(ntohs(client_addr.sin_port));
-                        std::string msg = "New conection on:" + a + ";" + b;
-                        //printf("selectserver: new connection from %s on socket %d\n", inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr*)&remoteaddr), remoteIP, INET6_ADDRSTRLEN), newfd);
-                        log.print(INFO, msg, GREEN, true);
-
-                    }
-                } 
-                else 
-                {   // handle data from a old client
-                    if ((nbytes = recv(i, _buffer, sizeof _buffer, 0)) <= 0)  /* Hay un error en la lectura. Posiblemente el cliente ha cerrado la conexión. Hacer aquí el tratamiento. En el ejemplo, se cierra el socket y se elimina del array de socketCliente[] */
-                    {   // got error or connection closed by client
-                        if (nbytes == 0) {
-                            // connection closed
-                            printf("selected server: socket %d hung up\n", i);
-                        } else {
-                            perror("recv");
-                        }
-                        close(i); // bye!
-                        log.print(INFO,"Connection closed",GREEN,true);
-                        FD_CLR(i, &master); // remove socket from master set
-                    } 
-                    else
-                    {   // we got some data from a client  /* Se ha leido un dato del cliente correctamente. Hacer aquí el tratamiento para ese mensaje. En el ejemplo, se lee y se escribe en pantalla. */
-                        std::cout << _buffer << std::endl;
-                        
-                        // Checking the request
-                        Request newrequest(_config);
-                        std::string result_string(_buffer);
-                        int result = newrequest.parse(result_string);  //compruebo request result = error
-                        newrequest.show_request_data();
-                        //_config.show_limit_except();
-                        log.print(INFO,"Response check:" + std::to_string(result),RED,true);
-
-                        //char *hello = "HTTP/1.0 200 OK\r\nContent-Length: 11\r\nContent-Type: text/html; charset=UTF-8\r\n\r\nHello World\r\n";//IMPORTANT! WE WILL GET TO IT
-                        // RESPONSE
-                        
-                        //log.print(INFO,"TEST",RED,true);
-                        if (FD_ISSET(i, &master)) { 
-                            log.print(INFO,"----------- STARTING RESPONSE -----------",YELLOW,true);
-                            Response newresponse(newrequest, result);
-                            //log.print(INFO,"TEST",RED,true);
-                            if (newresponse.sendResponse(i) == -1) {
-                                perror("send");
-                            }
-                            log.print(INFO,"Response sent",GREEN,true);    
-                        }  
-                                            
-                    }
-                } // END handle data from client
-            }
-        } // END got new incoming connection
-    } // END looping through file descriptors
-}
-
 //Test connection virtual function
 void SimpleServer::test_binding(int item_to_test)
 {
@@ -395,9 +249,6 @@ void SimpleServer::test_listening(int item_to_test)
 }
 
 void SimpleServer::setNonBlockingFD(int fd) {
-    //int flags = fcntl(fd, F_GETFL, 0);
-    //exit_if(flags < 0, "fcntl failed");
-    //int r = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
     int r = fcntl(fd, F_SETFL, O_NONBLOCK);
     if (r < 0)
     {

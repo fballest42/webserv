@@ -22,7 +22,7 @@ bool Parse_config::parse(void)
     int _fd;
     _fd = open(_path.c_str(), O_RDONLY);
     if (_fd < 0){
-        throw WebServer_Exception("config file not found");
+        log.print(INFO," [ERROR: Config file: " + _path + " not found]",RED,true);
         return(false);
     }
     
@@ -37,8 +37,7 @@ bool Parse_config::parse(void)
     std::vector<std::string> tmp;
     
     while(get_next_line(_fd, &line))
-    {
-      
+    { 
       std::string s(line);
       stripTab(s, s_outm);
       strip(s_outm, s_out);                              //delete spaces not necesary
@@ -91,31 +90,37 @@ bool Parse_config::parse(void)
             
             if (is_valid == false) // && is_server == false) 
             {
-                throw WebServer_Exception("directive not valid");
+                log.print(INFO," [ERROR: Config file: directive not valid]",RED,true);
                 return(false);
             }
             if (nb_w > 1) // too many workers definition
             {
-                throw WebServer_Exception("too many workers definition");
+                log.print(INFO," [ERROR: Config file: too many workers definition]",RED,true);
                 return(false);
             }
       }  
     }
 
+    if (open_brakers!=0)
+    {
+        log.print(INFO," [ERROR: Config file: not a close block]",RED,true);
+        return(false);
+    }
+
     // Hay al menos un servidor definido?
-    if (_nb_servers == 0)
-        throw WebServer_Exception("missing server block");
+    if (_nb_servers == 0){
+        log.print(INFO," [ERROR: Config file: missing server block]",RED,true);
+        return(false);
+    }
    
     //carga each configuration server  in a matriz of config 
     int e = 0;
-    std::cout << _nb_servers << " " << _server.size() << std::endl;
     while ( e < _nb_servers )
     {
         Config cfg1(_server.at(e), e);
         _configuration.push_back(cfg1);
         e++;
     }
-    //log.print(INFO,"-- XXXXXXX -- " + std::to_string(_nb_servers ), BLUE,true);
     //Check each config is ok
     e = 0;
     while ( e < _nb_servers )
@@ -124,7 +129,6 @@ bool Parse_config::parse(void)
             return(false);
         e++;
     }
-    //log.print(INFO,"-- XXXXXXX -- " + std::to_string(_nb_servers ), BLUE,true);
     return true;
 }
 

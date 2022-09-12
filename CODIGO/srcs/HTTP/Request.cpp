@@ -12,6 +12,7 @@ Basically, all requests look like this:
 User-Agent :This is a string identifying the user agent. An English version of Netscape 4.03 running under Windows NT would send "Mozilla/4.03 [en] (WinNT; I ;Nav)". (Mozilla is the old name for Netscape. See the references for more details.)
 Referer :The referer field (yes, it's misspelled in the standard) tells the server where the user came from, which is very useful for logging and keeping track of who links to ones pages.
 */
+
 #include "Request.hpp"
 
 extern Logger log;
@@ -44,56 +45,48 @@ int Request::parse(std::string &buffer)
   
   if ((ret = method_line()) > 0)
     return ret;
-  log.print(INFO,"METHOD LINE OK",RED, true);
+  //log.print(INFO,"METHOD LINE OK",RED, true);
+
   //Check prebody for chunked data
- std::cout << "BUFFER check:" << _buffer << std::endl;
+  //std::cout << "BUFFER check:" << _buffer << std::endl;
   if ((ret = headers()) > 0)
     return ret;
-  log.print(INFO,"HEADERS OK",RED, true);
-   std::cout << "BUFFER check:" << _buffer << std::endl;
+  //log.print(INFO,"HEADERS OK",RED, true);
+  
+  //check there is a content-lenght and check is < max_body_size
+  if (_request_headers.find("content-length") != _request_headers.end())
+  {
+    if (stol(_request_headers["content-length"]) > _config.get_client_max_body_size() )
+      return 413;
+  }
   if ((ret = chunked()) > 0)
     return ret;
-  
-  std::cout << "BUFFER check:" << _buffer << std::endl;
-
   if (!get_isChunked()) // is not chunked ????
   {
     if ((ret = body()) > 0 )
-    {
-      std::cout << "BODY---- ret:" << ret << std::endl;
       return ret;
-    }
   }
-  
-   std::cout << "BUFFER check:" << _buffer << std::endl;
 
   if (get_isChunked() && (ret = join_Chunks())) // is chunked ????
-  {
-    std::cout << "CHUNKED---- ret:" << ret << std::endl;
     return ret;
-  }
-    //Check body size
-  //if (!_config.get_client_max_body_size())
-  //{
+
+  //Check body size
   if (_body.length() > _config.get_client_max_body_size())
     {
-      log.print(INFO,"Invalid Body Size",RED,true);
+      //log.print(INFO,"Invalid Body Size",RED,true);
       return 413;
     }
-  //}
-
   //if (_body.empty() == true && _method == "POST")
   //    ret = 405;
   return ret;
 }
 
-/*check path not going backwards '..'
+/*
+check path not going backwards '..'
 */
 bool check_validity(std::string &uri) {
   int count = 0;
-
   std::string tmp = uri;
-
   while (tmp.find('/') != std::string::npos) {
     tmp = tmp.substr(tmp.find('/') + 1);
     if (tmp.empty())
@@ -133,46 +126,27 @@ int Request::method_line() {
   _target = target;
   std::string protocol = get_token(tmp, ' ',2);
   
-  log.print(INFO,"server : >>  [method: " + method + "] [target: " + target + "] [protocolo: " + protocol + "] [server: " + std::to_string(_config._nb) + "]",YELLOW,true);
-  ///------------------ CHECK METHOD ---------------------------///
+  //log.print(INFO,"server : >>  [method: " + method + "] [target: " + target + "] [protocolo: " + protocol + "] [server: " + std::to_string(_config._nb) + "]",YELLOW,true);
+  ///------------------ CHECK METHOD ----------------------------/////
   if (method != "GET" && method != "POST" && method != "DELETE")
-  {
-    log.print(INFO,"Invalid method",RED,true);
     return 501;
-  }
   else
-  {
-    log.print(INFO,"Valid method",GREEN,true);
     _method = method;
-  }
   ///------------------ CHECK PROTOCOL ---------------------------/////
   if (protocol != "HTTP/1.1")
-  {
-    log.print(INFO,"Invalid Protocol",RED,true);
     return 505;
-  }
   else
-  {
-    log.print(INFO,"Valid Protocol",GREEN,true);
     _protocol = protocol;
-  }
-  ///------------------ CHECK TARGET ---------------------------///
+  ///------------------ CHECK TARGET -----------------------------/////
   //check target begin with slash
   if (target[0]!= '/')
-  {
-    log.print(INFO,"NO COMIENZA POR '/' ",RED,true);
     return 400;
-  }
   //Check length of the path
   if (target.length() > 100000) 
     return 414;
   //Check no backwards ".." path
   if (!check_validity(target))
     return 403;
-
-  //Check the path is in locations or not.-->error 404 
-  log.print(INFO,"target:" + target,GREEN,true);
-  
   //Check it has parameters something after 
   if (target.find('?') != std::string::npos)
   {
@@ -180,39 +154,20 @@ int Request::method_line() {
     target= target.erase(target.find('?'));
   }
 
-  log.print(INFO,"query:" + _query_string,GREEN,true);
-  log.print(INFO,"target:" + target,GREEN,true);
-  
-  //     CHECK REDIRECT
-  
-  // AFTER read headers
-  // Referer: http://localhost:8001/STARTREK in the second call
-  // añade el referer al target
-  
-  //target = _target;
-  /*
-  std::map<std::string, std::string>::iterator it;
-  log.print(INFO,"REFERER:" + target,GREEN,true);
-  log.print(INFO,"old target:" + target,GREEN,true);
-  it = _request_headers.find("Referer:");
-  if (it != _request_headers.end())
-  {
-    log.print(INFO,"FOUND" +  it->second ,GREEN,true);
-    std::string str = get_token(it->second,'/', nb_tokens(it->second,'/'));
-    target = "/" + str + target;
-  }
-  */
-
-  
-  /* revisar que el target pedido tiene como comienzo una location
-  */
+  //Check the path is in locations or not.-->error 404   
+  /*   check if target begin with a location  */
   int l =0;
   _actualLocation = ""; //init actual location
   _pathInfo = target; //init  _pathInfo
   std::map<std::string, std::vector<std::string> >::reverse_iterator rit;
   for (rit=_config._locations.rbegin(); rit!=_config._locations.rend(); ++rit)
   {
-    log.print(INFO,"comparador:" + rit->first + "----" + target ,GREEN,true);
+    //log.print(INFO,"comparador:" + rit->first + "----" + target ,GREEN,true);
+    // std::string loc1 = rit->first;
+    // if (loc1.size()>1 && loc1[loc1.size()-1]=='/')
+    //   loc1.pop_back();
+    // l = loc1.length();
+
     l = rit->first.length();
     if (target.substr(0,l).compare(rit->first) == 0)
     {
@@ -223,24 +178,24 @@ int Request::method_line() {
     }
   }
 
-  if (target != "/")
-  {
-    if (rit  == _config._locations.rend()) // not in location
+  //if (target != "/")
+  //{
+    if (rit  == _config._locations.rend()) // NOT in locations
     {  
-      log.print(INFO,"NOT target in locations:" + target ,RED,true);
+      //log.print(INFO,"NOT target in locations:" + target ,RED,true);
       std::cout << _config._locations.size() << std::endl;
       ret = 404;
     }
-    else  //is in location, separe LOCATION and PATHINFO
+    else  // IS in location, separe LOCATION and PATHINFO
     { //////////////////////// redirection /////////////////////////////////////////////
-      log.print(INFO,"INTERNAL REDIRECT TO : [target: " + target + "]", YELLOW,true);
+      log.print(INFO,"INTERNAL REDIRECT TO : [location: " + rit->first + "]", YELLOW,true);
       Config new_config;
       //Have to change server config with  config
       new_config.set_Config(_config._locations.at(rit->first), _config._nb);
       new_config.parse();
       
       // !!!!!!!!! no hereda de atras y dejar default / 
-      log.print(INFO,"NEW CONFIG", YELLOW,true);
+      //log.print(INFO,"NEW CONFIG", YELLOW,true);
       
       //CHANGE CONFIG FILE WITH NEW CONFIGURATION
 
@@ -263,9 +218,9 @@ int Request::method_line() {
       //CGI-BIN
       if (!new_config._cgi_bin.empty())
       {
-        std::cout << "ESTOY AQUI -------------------------------------------------\n"; 
-        std::cout << _config._cgi_bin << std::endl;
-        std::cout << new_config._cgi_bin << std::endl;
+        // std::cout << "ESTOY AQUI -------------------------------------------------\n"; 
+        // std::cout << _config._cgi_bin << std::endl;
+        // std::cout << new_config._cgi_bin << std::endl;
         _config._cgi_bin = new_config._cgi_bin;
       }
       //CGI
@@ -273,9 +228,9 @@ int Request::method_line() {
       _config._locations.clear();
       //_config.show_all();
     }
-  }
+  //}
 
-  ///// localicar file y path before and after file.....
+  ///// localizar file y path before and after file.....
 
   int tokens = nb_tokens(target,'/');
   std::string tmp_path;
@@ -285,16 +240,16 @@ int Request::method_line() {
   //http://www.SOMEWHERE.org/cgi-bin/ice_cream.plx?flavor=mint
   if (nb_tokens(target,'.') > 1)  // there is a file
   {
-    log.print(INFO,"THERE IS a FILE" + target + _actualLocation, RED,true);
+    //log.print(INFO,"THERE IS a FILE" + target + _actualLocation, RED,true);
     //DELETE LOCATION
     std::size_t pos = 0;
     pos = target.find(_actualLocation);
     target= target.substr(pos+_actualLocation.length(), target.length());
-    log.print(INFO,"THERE IS a FILE" + target + _actualLocation, RED,true);
+    //log.print(INFO,"THERE IS a FILE" + target + _actualLocation, RED,true);
 
     if (nb_tokens(target,'.')>2)  //CHECK IF MORE THAN ONE ....
     {
-      log.print(INFO,"MORE THAN ONE  '.' ",RED,true);
+      //log.print(INFO,"MORE THAN ONE  '.' ",RED,true);
       return 400;
     }
     int i = 1;
@@ -326,7 +281,7 @@ int Request::method_line() {
     tmp_path= "";
     std::size_t pos = 0;
     pos = target.find(_actualLocation);
-    log.print(INFO,"--------------]" + std::to_string(pos) + target + "---" + _actualLocation,YELLOW,true);
+    //log.print(INFO,"--------------]" + std::to_string(pos) + target + "---" + _actualLocation,YELLOW,true);
     tmp_path = target.substr(pos + _actualLocation.length(), target.length());
     if (tmp_path[0]=='/')
       tmp_path = tmp_path.substr(1,tmp_path.size());
@@ -386,7 +341,6 @@ int Request::headers()
       return (400); 
     else
       header_value = ft_clean_token(get_token(tmp, ':', 1));
-    //std::cout << "NNNN---" << header << header_value << std::endl;
     // Check length of header (<=1000) and header (value <=4000)
     if (header.length() > 1000 || header_value.length() > 4000)
       return 400;
@@ -419,13 +373,8 @@ int Request::headers()
     //delete la primera linea
     size_t end = _buffer.find("\r\n");
     _buffer.erase(0, end + 2);
-    //std::cout << "x---xx--" << header << header_value << std::endl;
     //return 0;
   }
-
-  //delete la siguiente linea en blanco
-  //size_t end = _buffer.find("\r\n");
-  //_buffer.erase(0, end + 2);
 
   //Checking there are headers
   // if (_request_headers.empty())
@@ -444,15 +393,13 @@ int Request::headers()
     if (_request_headers["content-length"].find_first_not_of("0123456789") != std::string::npos)
       return 400; //non numeric symbol or '-'
     try {
-      _content_length = std::stoi(_request_headers["content-length"]);
+      _content_length = std::stol(_request_headers["content-length"]);
     }
     catch (std::exception &e){ 
         return 400;
     }
   }
-
-  get_headers();
-
+  //get_headers();
   return 0;
 }
 
@@ -460,24 +407,36 @@ int Request::headers()
 int Request::chunked()
 {
   _body_offset = 0; 
-  std::cout << "--------------------------------------CHECKING IS A CHUNKED REQUEST:?\n" << std::endl;
+  //std::cout << "--------------------------------------CHECKING IS A CHUNKED REQUEST:?\n" << std::endl;
   if (_request_headers.find("transfer-encoding") != _request_headers.end() && _request_headers["transfer-encoding"] == "chunked"){
     _is_chunked = true;
-    std::cout << "--------------------------------------IS A CHUNKED REQUEST:\n";
+    //std::cout << "--------------------------------------IS A CHUNKED REQUEST:\n";
   }
-  //size_t end = _buffer.find("\r\n");
-  //_buffer.erase(0, end + 2); // borro la linea tratada.
   return 0;
 }
 
 /* Read Body */
 int Request::body()
 {
+  //// quito la primera linea \r\n
+  std::string tmp;
+  // while (1){
+    tmp = _buffer.substr(0, _buffer.find("\r\n"));
+    std::cout << tmp << std::endl;
+    if (tmp.empty()){
+      size_t end = _buffer.find("\r\n");
+      _buffer.erase(0, end + 2);
+    }
+  //   else {
+  //     break;
+  //   }
+  // }
+  
   // If length body < que defined header _content_length error 400.
   if (_buffer.length() < _content_length)
   {
-    log.print(INFO,"_BUFFER LENGTH 1 " + std::to_string(_buffer.length()) + std::to_string(_content_length) ,RED,true);
-    return 400;
+    log.print(INFO,"_BUFFER LENGTH 1 " + std::to_string(_buffer.length()) + " " + std::to_string(_content_length) ,RED,true);
+    return 999;
   }
   //rest of buffer save in _body
   if (_buffer.length() >= _content_length) {
@@ -486,26 +445,24 @@ int Request::body()
     _buffer.clear(); 
     if (_body.length() == _content_length)
     {
-      std::cout << "Body:"  << std::endl;
-      std::cout << "Body length :" << _buffer.length() << std::endl;
-      std::cout << "Content length :" << _content_length << std::endl;
-      std::cout << _body << std::endl;
+      // std::cout << "Body:"  << std::endl;
+      // std::cout << "Body length :" << _buffer.length() << std::endl;
+      //std::cout << "Content length :" << _content_length << std::endl;
+      //std::cout << _body << std::endl;
       return 0;
     }
     else
     { 
-      log.print(INFO,"_BUFFER LENGTH 2 ",RED,true);
+      //log.print(INFO,"_BUFFER LENGTH 2 ",RED,true);
       return 400;
     }  
   }
-  std::cout << "Body:"  << std::endl;
-  std::cout << "Body length :" << _buffer.length() << std::endl;
-  std::cout << "Content length :" << _content_length << std::endl;
-  std::cout << _body << std::endl;
+  // std::cout << "Body:"  << std::endl;
+  // std::cout << "Body length :" << _buffer.length() << std::endl;
+  // std::cout << "Content length :" << _content_length << std::endl;
+  //std::cout << _body << std::endl;
   return 0;
 }
-
-////// cambiar cadena "/r/n" OJOJOOJOJOJOOJOJOJOOOJO Y SUBT
 
 int Request::join_Chunks(){   ////// /r/n OJOJOOJOJOJOOJOJOJOOOJO Y SUBT
   // first line --> hex number with length of the data in the chunk

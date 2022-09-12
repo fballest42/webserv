@@ -9,6 +9,7 @@
 #include <cstring>  
 #include <sstream>
 #include <string>
+#include "logger.hpp"
 
 class Error_page
 {

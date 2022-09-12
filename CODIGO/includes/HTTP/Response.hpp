@@ -33,16 +33,13 @@ class Response
 {
     private:
         std::string _version;
-        std::string _status;
-        std::string _contentType;
-        int _contentLength;
-        std::string _charset;
-        std::string _location;
+        int         _contentLength;
+        //std::string _charset;
+        //std::string _location;
         std::string _date;
-
         Request     _request;
-        int         _stat;                            //status from request error 
-        File _file;                         
+        int         _stat;                      //status from request error 
+        File        _file;                         
         std::string _response;                  //salida final = header+body
         std::string _header;                    //header for response
         std::string _body;                      //body for response
@@ -60,10 +57,9 @@ class Response
         int method_Post();
         int method_Get();
         void setHeader();
-        void setResponse();
         int sendResponse(int socket);
         bool is_allow_method(std::string met);
         bool get_is_a_CGI(){return _is_a_cgi;};
-        bool isCGI(std::string extension);
+        int get_stat(){return _stat;};
 };
 #endif

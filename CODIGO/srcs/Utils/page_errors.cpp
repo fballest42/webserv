@@ -1,5 +1,7 @@
 #include "page_errors.hpp"
 
+extern Logger log;
+
 Error_page::Error_page()
 {
     // INFORMATIONAL
@@ -93,6 +95,7 @@ std::string Error_page::get_error_page(int error_type){
     m_body += "<hr><center>dperez-z and fballest webserv</center>\n";
     m_body += "</body>\n";
     m_body += "</html>";
+    log.print(INFO,"Error page create: " + std::to_string(error_type) + " " + _error_pages[error_type],RED,true);
     return m_body;
 };
 

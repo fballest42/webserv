@@ -1,4 +1,14 @@
+
+https://daily-dev-tips.com/posts/mac-os-x-setting-up-virtual-hosts/
+
+
+
 sudo nano /private/etc/hosts
+
+#Added to try webserver
+127.0.0.1 google1.com default_server
+
+
 
 añadir
 

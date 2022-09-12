@@ -1,10 +1,10 @@
--GET 
-    - ver si es directorio y tiene autoindex
-    - sino ver si entregamos el fichero (ISCGI)
-        -html -txt -jpeg...
-    
--POST
-    - guardar archivo o ejecutar cgi.
--DELETE
+CGI admitir extensiones sin "."
 
-Referer: http://localhost:8001/STARTREK
+VER SI LOS CGI ISE EJECUTAN CON LA DIRECCIÓN CGI-BIN
+los valores de los header que devuelve el cgi HTTP_mxxx = abc debe estar en mayúsculas?
+
+!!!!!!!!! chequear las configuración de los location antes? DONE
+
+check host header?
+
+que maximo body leght by default?
