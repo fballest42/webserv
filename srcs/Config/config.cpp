@@ -181,6 +181,8 @@ int Config::parse(void)
         if (token == "listen" && n_tokens == 2)   //check number of tokens pendiente
             {
                 std::string new_token = get_token(_vector_cfg.at(c), ' ', 2);
+                // AQUI HABRÍA QUE CHECKEAR QUE EL PUERTO NO EXISTE EN OTRO SERVIDOR, 
+                // EN CASO DE EXISTIR SE DEBE GENERAR UN SERVIDOR VIRTUAL DEL YA EXISTENTE.
                 if ((nb_tokens(new_token, ':') == 2))
                 {
                     std::string new_port = get_token(new_token, ':', 2);
