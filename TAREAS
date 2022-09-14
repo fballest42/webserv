@@ -1,4 +1,9 @@
 CGI admitir extensiones sin "."
+<<<<<<< HEAD
+En el post request del test de POST 1, hay que revisar los saltos de linea y retornos de carro si hay que borrarlos o no.
+
+Referer: http://localhost:8001/STARTREK
+=======
 
 VER SI LOS CGI ISE EJECUTAN CON LA DIRECCIÓN CGI-BIN
 los valores de los header que devuelve el cgi HTTP_mxxx = abc debe estar en mayúsculas?
@@ -8,3 +13,4 @@ los valores de los header que devuelve el cgi HTTP_mxxx = abc debe estar en may�
 check host header?
 
 que maximo body leght by default?
+>>>>>>> 9bc6c619e4d31802aaed41444ec3894099532197

@@ -1,0 +1,46 @@
+Status: 226
+Content-Type: CGI/MINE
+
+TERM_PROGRAM=vscode
+TERM=xterm-256color
+SHELL=/bin/bash
+HADOOP_HOME=/Users/daniel/hadoop-3.3.1
+TMPDIR=/var/folders/vs/q7nn12y5705_1ds4jx0m516h0000gn/T/
+CONDA_SHLVL=1
+Apple_PubSub_Socket_Render=/private/tmp/com.apple.launchd.w1fqeyqFK6/Render
+TERM_PROGRAM_VERSION=1.57.0
+CONDA_PROMPT_MODIFIER=(base) 
+ORIGINAL_XDG_CURRENT_DESKTOP=undefined
+YARN_HOME=/Users/daniel/hadoop-3.3.1
+USER=daniel
+CONDA_EXE=/opt/anaconda3/bin/conda
+SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.nQvxsyxQvM/Listeners
+__CF_USER_TEXT_ENCODING=0x1F5:0x0:0x8
+_CE_CONDA=
+HADOOP_COMMON_LIB_NATIVE_DIR=/Users/daniel/hadoop-3.3.1/lib/native
+PATH=/Library/Frameworks/Python.framework/Versions/3.6/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Frameworks/Python.framework/Versions/3.6/bin:/opt/anaconda3/bin:/opt/anaconda3/condabin:/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home/bin:/Users/daniel/hadoop-3.3.1/sbin:/Users/daniel/hadoop-3.3.1/bin:/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home//bin:/Users/daniel/hadoop-3.3.1/sbin:/Users/daniel/hadoop-3.3.1/bin
+HADOOP_HDFS_HOME=/Users/daniel/hadoop-3.3.1
+CONDA_PREFIX=/opt/anaconda3
+PWD=/Users/daniel/42/webserv_OK/CODIGO/test/cgi-bin
+HADOOP_COMMON_HOME=/Users/daniel/hadoop-3.3.1
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home/
+LANG=es_ES.UTF-8
+XPC_FLAGS=0x0
+_CE_M=
+XPC_SERVICE_NAME=0
+SHLVL=2
+HOME=/Users/daniel
+VSCODE_GIT_ASKPASS_MAIN=/private/var/folders/vs/q7nn12y5705_1ds4jx0m516h0000gn/T/AppTranslocation/394F6963-3A24-45E7-A036-FA15803F8EE1/d/Visual Studio Code.app/Contents/Resources/app/extensions/git/dist/askpass-main.js
+HADOOP_MAPRED_HOME=/Users/daniel/hadoop-3.3.1
+CONDA_PYTHON_EXE=/opt/anaconda3/bin/python
+LOGNAME=daniel
+VSCODE_GIT_IPC_HANDLE=/var/folders/vs/q7nn12y5705_1ds4jx0m516h0000gn/T/vscode-git-baa250af52.sock
+CONDA_DEFAULT_ENV=base
+VSCODE_GIT_ASKPASS_NODE=/private/var/folders/vs/q7nn12y5705_1ds4jx0m516h0000gn/T/AppTranslocation/394F6963-3A24-45E7-A036-FA15803F8EE1/d/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)
+GIT_ASKPASS=/private/var/folders/vs/q7nn12y5705_1ds4jx0m516h0000gn/T/AppTranslocation/394F6963-3A24-45E7-A036-FA15803F8EE1/d/Visual Studio Code.app/Contents/Resources/app/extensions/git/dist/askpass.sh
+COLORTERM=truecolor
+_=./print_cgi
+OLDPWD=/Users/daniel/42/webserv_OK/CODIGO/test
+
+
+
