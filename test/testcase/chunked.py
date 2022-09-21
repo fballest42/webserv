@@ -11,7 +11,7 @@ import socket
 def test_chunked_w_trailer() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((config.SERVER_ADDR, config.SERVER_PORT))
-    request_header = "POST /post/cgi-bin/print.cgi HTTP/1.1\r\nHost: localhost\r\nTransfer-encoding: chunked\r\n\r\n"
+    request_header = "POST /post/print.cgi HTTP/1.1\r\nHost: localhost\r\nTransfer-encoding: chunked\r\n\r\n"
     client.send(request_header.encode())
     request_header = "5\r\ntest\n\r\n"
     client.send(request_header.encode())
@@ -31,7 +31,8 @@ def test_chunked_w_trailer() -> str:
         )
     body = http_response.read().decode("UTF-8")
     # print(body)
-    # if (body.find("HTTP_TEST_HEADER=blabla") == -1
+    # if (
+    #     body.find("HTTP_TEST_HEADER=blabla") == -1
     #     or body.find("HTTP_ACCEPT_LANGUAGE=fr") == -1
     # ):
     #     return "Missing headers from request"
@@ -39,7 +40,6 @@ def test_chunked_w_trailer() -> str:
         return "Missing content in request"
     # print(body)
     return ""
-
 
 def test_chunked_multiplezeros() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,7 +61,6 @@ def test_chunked_multiplezeros() -> str:
     # print(body)
     return ""
 
-
 def test_ChunkExtensionNoValue() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((config.SERVER_ADDR, config.SERVER_PORT))
@@ -79,7 +78,6 @@ def test_ChunkExtensionNoValue() -> str:
         )
     # print(body)
     return ""
-
 
 def test_ChunkExtensionUnquotedValue() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -101,7 +99,6 @@ def test_ChunkExtensionUnquotedValue() -> str:
     # print(body)
     return ""
 
-
 def test_MultipleChunkExtensions() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((config.SERVER_ADDR, config.SERVER_PORT))
@@ -119,7 +116,6 @@ def test_MultipleChunkExtensions() -> str:
         )
     # print(body)
     return ""
-
 
 def test_DecodeEmptyBodyInPieces() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -147,7 +143,6 @@ def test_DecodeEmptyBodyInPieces() -> str:
     # print(body)
     return ""
 
-
 def test_DecodeEmptyBodyWithExtraStuffAfter() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((config.SERVER_ADDR, config.SERVER_PORT))
@@ -166,7 +161,6 @@ def test_DecodeEmptyBodyWithExtraStuffAfter() -> str:
     if body.find("Hello!") != -1:
         return "Read too much content"
     return ""
-
 
 def test_DecodeThreeChunksOnePiece() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -187,7 +181,6 @@ def test_DecodeThreeChunksOnePiece() -> str:
     if body.find("Hello, World!!!It's me") == -1:
         return "Missing content 'Hello, World!!!It's me' "
     return ""
-
 
 def test_DecodeBadTrailer() -> str:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

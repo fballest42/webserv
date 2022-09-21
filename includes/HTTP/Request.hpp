@@ -39,6 +39,7 @@ class Request {
     Config      _config;
     std::map<std::string, std::string> _request_headers;
 
+    Request();
     Request(Config conf);
     ~Request();
 
@@ -63,10 +64,9 @@ class Request {
 
     void get_headers();
     std::string get_body(){return _body;}
-    bool timeout();
     time_t get_start_timer_in_sec();
     time_t get_last_timer_in_sec();
+    void  set_request(Config conf);
     void show_request_data();
 };
-
 #endif

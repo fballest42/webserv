@@ -18,7 +18,6 @@ bool isCGI_extension(std::string file, std::map<std::string, std::string>  _cgi)
 {
     std::string extension;
     extension = "." + get_token(file, '.', 1);
-    //log.print(INFO,"cgi extension:" + extension, GREEN,true);
     std::map<std::string, std::string>::iterator  it;
     it = _cgi.find(extension);
     if (it != _cgi.end())
@@ -62,7 +61,6 @@ int Response::createErrorPage(int error_code){
     File tmp;
     if (_request._config.exist_error_page(error_code))
     {
-        //tmp.set_path(_request._config.get_root() + _request._config.get_path_error_page(error_code));
         tmp.set_path(_request._config.get_path_error_page(error_code));        //tmp.set_path("www/siteA/errors/404.html");
         // Check if no problem when open file
         if(tmp.open())
@@ -74,13 +72,13 @@ int Response::createErrorPage(int error_code){
         {
             log.print(INFO,"Custom Page Error not found:"+ tmp.getPath() ,RED,true); 
             _body = err_page.get_error_page(error_code);
-            this->_contentLength = _body.length(); ///////////
+            this->_contentLength = _body.length(); 
         }
     }
     else     // create body with default error pages
     {
         _body = err_page.get_error_page(error_code);
-        this->_contentLength = _body.length();  ///////////
+        this->_contentLength = _body.length(); 
     }
     // create headers
     _response_headers["Content-Length"] = _body.length();
@@ -153,57 +151,37 @@ void Response::setHeader()
 
 void Response::build_body()
 {
-    //log.print(INFO,"----------- START BUILD RESPONDE BUILD --------------", GREEN,true);
-    //log.print(INFO,"CHECK IF ERROR IN REQUEST: " + std::to_string(_stat), YELLOW,true);
     if (_stat >= 300)
     {
         createErrorPage(_stat);
         return;
     }
-    //log.print(INFO,"=> NOT ERROR IN REQUEST",YELLOW,true);
-  
     //check if method is allowed
-    //log.print(INFO,"CHECK IF METHOD IS ALLOWED:" + _request.get_method(), YELLOW,true);
     if (!is_allow_method(_request.get_method()))
-    {
         _stat = 405;
-    }
     if (_stat >= 300)
     {
         createErrorPage(_stat);
         return;
     }
-    //log.print(INFO,"=> METHOD ALLOWED",YELLOW,true);
 
-    //HANDLE METHOD
-    //delete method
-    //log.print(INFO,"CHECK DELETE METHOD", YELLOW,true);
-    if(_request.get_method()=="DELETE")
-    {
-        //log.print(INFO,"IT IS DELETE METHOD", GREEN,true);
-        if (!method_Delete())
-            return;
-    }
+    //HANDLE METHODS
+    if (_request.get_method()=="DELETE")
+        method_Delete();    
     if (_stat >= 300)
     {
         createErrorPage(_stat);
         return;
     }
-    //post method
-    //log.print(INFO,"CHECK POST METHOD", YELLOW,true);
     if(_request.get_method()=="POST")
+        method_Post();
+    if (_stat >= 300)
     {
-        //log.print(INFO,"IT IS POST METHOD", GREEN,true);
-        if (!method_Post())
-            return;
+        createErrorPage(_stat);
+        return;
     }
-    //get method
-    //log.print(INFO,"CHECK GET METHOD", YELLOW,true);
     if(_request.get_method()=="GET")
-    {
-        //log.print(INFO,"IT IS GET METHOD", GREEN,true);
-        method_Get();
-    }
+       method_Get();
     if (_stat >= 300 and !get_is_a_CGI())
     {
         createErrorPage(_stat);
@@ -248,49 +226,28 @@ int Response::method_Post(){
     
     if (_request.get_isFile() == true)    //it is a file
     {
-            //log.print(INFO,"IS a file ...." + this->_request.get_pathInfo() + "/" + this->_request.get_fileName(),RED,true);
             if (isCGI_extension(this->_request.get_fileName(), _request._config._cgi)) //OJO//  && this->_request.get_pathInfo() == "cgi-bin")
             {
                 log.print(INFO,"CGI file detected",GREEN,true);
-                //std::cout << _request.get_body() << std::endl;
                 _is_a_cgi = true;
                 //extension file cgi
                 CGI cgi(this->_request);
                 cgi.init(1);
                 int ret = cgi.execute();
                 _body = cgi.getBody();      // Put result in the Body 
-                //log.print(INFO,"server : >>  result cgi execvu: \n" + _body + std::to_string(ret),YELLOW,true);
                 _response_headers["Content-Type"] = "CGI/MINE";
                 return (_stat = ret);
-                //return 0;
-                //DO the MAGIC HERE
-                //Define class
-                /*
-                CGI cgi(file_, config_, config_.getHeaders(), config_.getBody());
-                cgi.init(worker_id_);
-                if ((status_code_ = cgi.execute()) > 400)
-                    return status_code_;
-                cgi.parseHeaders(headers_); // Put some values in the headers
-                body_ = cgi.getBody();      // Put result in the Body 
-                headers_["Content-Length"] = ft::to_string(body_.length());
-                return status_code_;
-                */
-            } else {
-                //log.print(INFO,"IS NOT CGI file",RED,true);
-                // std::string new_path = _request._config.get_root() + "/" + _request.get_pathInfo() + _request.get_fileName();
-                // _file.set_path(new_path);
-                // log.print(INFO,"New path of file",RED,true);
+            } 
+            else {
                 File tmp_file;
                 std::string ext_file, loc_file;
                 ext_file = _request._config.get_root() + _request._config.get_upload()+"/"+_request.get_fileName();
                 loc_file = _request._config.get_upload()+"/"+_request.get_fileName();
-                //log.print(INFO,"path file to upload: " + ext_file, YELLOW,true);
                 tmp_file.set_path(ext_file);
                 std::string str = _request.get_body();
                 _body = str;
                 pthread_mutex_lock(&g_write);
                 if(!tmp_file.exists()){     // no -> file create (body) --> code 201
-                    //log.print(INFO,"Creating file : " + ext_file, YELLOW,true);
                     tmp_file.create(str);
                     _response_headers["Location"] =  _request.get_actualLocation() + "/" + loc_file ;
                     if (_request.get_isChunked() == 1)
@@ -299,47 +256,18 @@ int Response::method_Post(){
                         _stat = 201;
                 }
                 else {                      // si -> file append (body) --> code 200
-                    //log.print(INFO,"Append to file : " + ext_file, YELLOW,true);
                     tmp_file.append(str);
                     _response_headers["Location"] = _request.get_actualLocation() + "/" + loc_file ;
                     _stat = 200;
                 }
                 pthread_mutex_unlock(&g_write);
                 tmp_file.close();
-                //tmp_file.unlink();
             }
-            //_file.set_path(_request._config.get_root() + _request.get_pathCGI() + "/" + _request.get_fileCGI());
     }
- 
-    
-    //file exits? 
-    // File tmp_file;
-    // std::string ext_file, loc_file;
-    // ext_file = _request._config.get_root() + _request._config.get_upload()+"/"+_request.get_fileName();
-    // loc_file = _request._config.get_upload()+"/"+_request.get_fileName();
-    // log.print(INFO,"path file to upload: " + ext_file, YELLOW,true);
-    // tmp_file.set_path(ext_file);
-    // std::string str = _request.get_body();
-    // _body = str;
-    // pthread_mutex_lock(&g_write);
-    // if(!tmp_file.exists()){     // no -> file create (body) --> code 201
-    //     log.print(INFO,"Creating file : " + ext_file, YELLOW,true);
-    //     tmp_file.create(str);
-    //     _response_headers["Location"] = loc_file ;
-    //     if (_request.get_isChunked() == 1)
-    //         _stat = 226;
-    //     else
-    //         _stat = 201;
-    // }
-    // else {                      // si -> file append (body) --> code 200
-    //      log.print(INFO,"Append to file : " + ext_file, YELLOW,true);
-    //     tmp_file.append(str);
-    //     _response_headers["Location"] = loc_file ;
-    //     _stat = 200;
-    // }
-    // pthread_mutex_unlock(&g_write);
-    // tmp_file.close();
-    // tmp_file.unlink();
+    else {
+        _stat = 405;
+        return (405);
+    }
     return 0;
 }
 
@@ -348,20 +276,17 @@ int Response::method_Get(){
     if (_request._config.get_autoindex()=="on" && _request.get_isFile() == false) // &&is directory
     {
         log.print(INFO,"Autoindex detected",GREEN,true);
-        //log.print(INFO,"IS a Autoindex:" +  _request._config.get_root() + " " + _request.get_pathInfo(),GREEN,true);
         std::string root = _request._config.get_root();
         std::string path = _request.get_pathInfo();
         if (path == "/")
             path = "";
         _body = autoindex(root, path);
-        std::cout << _body << std::endl;
         return 0;
     }
     else   //is a file or a path?
     {    
         if (_request.get_isFile() == true)    //it is a file
         {
-            //log.print(INFO,"IS a file ...." + this->_request.get_fileName() +".."+ this->_request.get_pathInfo(),RED,true);
             if (isCGI_extension(this->_request.get_fileName(), _request._config._cgi)) /// && this->_request.get_pathInfo() == "cgi-bin")
             {
                 log.print(INFO,"CGI file detected",GREEN,true);
@@ -371,30 +296,13 @@ int Response::method_Get(){
                 cgi.init(1);
                 int ret = cgi.execute();
                 _body = cgi.getBody();      // Put result in the Body 
-                //log.print(INFO,"server : >>  result cgi execvu: " + _body + std::to_string(ret),YELLOW,true);
                 _response_headers["Content-Type"] = "CGI/MINE";
-                //_response_headers["Content-Type"] = "text/html";
                 _stat = ret;
                 return 0;
-                //DO the MAGIC HERE
-                //Define class
-                /*
-                CGI cgi(file_, config_, config_.getHeaders(), config_.getBody());
-                cgi.init(worker_id_);
-                if ((status_code_ = cgi.execute()) > 400)
-                    return status_code_;
-                cgi.parseHeaders(headers_); // Put some values in the headers
-                body_ = cgi.getBody();      // Put result in the Body 
-                headers_["Content-Length"] = ft::to_string(body_.length());
-                return status_code_;
-                */
             } else {
-                //log.print(INFO,"IS NOT CGI file",RED,true);
                 std::string new_path = _request._config.get_root() + _request.get_pathInfo() + _request.get_fileName();
                 _file.set_path(new_path);
-                //log.print(INFO,"New path of file",RED,true);
             }
-            //_file.set_path(_request._config.get_root() + _request.get_pathCGI() + "/" + _request.get_fileCGI());
         }
         else //is a path must join default index.html
             _file.set_path(_request._config.get_root() + _request.get_pathInfo() + "/" + _request._config.get_index());
@@ -480,22 +388,16 @@ std::string Response::autoindex(std::string &root, std::string &path){
         int ret = strftime(buf, 32, "%d-%b-%Y %H:%M", tm);
         li.date = std::string(buf, ret);
         li.size = statbuf.st_size;
-        //std::cout << "kk" << li.size << std::endl;
         listing.push_back(li);
     }
-    ///std::sort(listing.begin(), listing.end(), sort_auto_listing);
     //printing list in body
     for (std::vector<auto_listing>::iterator it = listing.begin(); it != listing.end(); it++) {
-        //body = body + "<a href=\"" + ft::unique_char(target +  "/" + it->name) + "\">" + it->name + "</a>";
-        std::cout << "AUTOINDEX\n";
-        std::cout << root << std::endl;
         body = body + "<a href=\"" + _request.get_actualLocation() + "/" + it->name + "\">" + it->name + "</a>";
         body += " ";
         body += it->date;  //date of file
         body += " ";
         if (it->is_dir)
             body += "-";
-                //body += set_width(20, "-");
         else
             body += std::to_string(it->size);
         body += "\r\n";
@@ -521,7 +423,6 @@ int Response::sendResponse(int socket)
     this->_response += m_body;
     log.print(INFO,">> [status: " + std::to_string(get_stat()) + " " + err_page.get_error_description(get_stat()) +"] [content Length: "  +  std::to_string(this->_contentLength) + "]" +"] [server: " + std::to_string(_request._config.get_nb()) + "]",YELLOW,true);
     return (write(socket, this->_response.c_str(), this->_response.length()));
-    //close(client_socket);
 }
 
 // Check if method is allow 0 false 1 true

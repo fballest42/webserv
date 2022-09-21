@@ -5,7 +5,7 @@ extern Logger log;
 Parse_options::Parse_options(int argc, char **argv): _argc(argc), _argv(argv), _path("./config/default.conf"),_level(0),_help(false),_test(false)
 {}
 
-Parse_options::~Parse_options(){};
+Parse_options::~Parse_options(){}
 
 bool Parse_options::help(void)
 {return _help;}
@@ -22,7 +22,6 @@ std::string Parse_options::helpText(void)
     text += "Usage: webserv [options] [config_file]\n";
     text += "\nOptions: \n";
     text += "\n  -h --help          : this help text\n";
-    //text += "\n  -l, --log [LEVEL]  : set log level (between 0 and 2) \n";
     text += "\n  -t, --test         : test config and exit\n";
     text += "\n  -u, --uri          : keep location uri on routing\n";
     return (text);

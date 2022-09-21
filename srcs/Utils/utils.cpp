@@ -24,17 +24,12 @@ void capitalizeString(const std::string& in, std::string& out)
     std::string tmp;
     while (b != e)
     {
-        //std::cout << (*b) << " " << (char)std::toupper(*b) << std::endl;
         tmp.push_back(std::tolower(*b));
-        //std::cout << tmp << std::endl;
         b++;
     } 
-    //tmp.push_back(0);
     std::string::const_iterator init = tmp.begin(), end = tmp.end(); 
     out.assign(init, end); 
 }
-
-//std::string lowerString()
 
 // Check if c is a space
 bool isSpace(char c)
@@ -78,10 +73,8 @@ std::string ft_clean_token(const std::string& in)
 
     while (b != e)
     {
-        //std::cout << (*b) << " " << (char)std::toupper(*b) << std::endl;
         if (!isSpace(*(b)) && !isTab(*(b)) )
             out.push_back(std::tolower(*b));
-        //std::cout << tmp << std::endl;
         b++;
     } 
     return out;
@@ -108,7 +101,6 @@ std::string  get_token(std::string str, char delimiter, int nb)
     int ret=0;
     while (std::getline(iss, token, delimiter))
     {
-        //std::cout << token << std::endl;
         if (ret == nb)
             break;
         ret++;

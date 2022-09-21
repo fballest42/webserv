@@ -16,19 +16,16 @@ void File::set_path(std::string path, bool negociation) {
 
 bool File::open(bool create) {
   close();
-
   if (create)
     _fd = ::open(_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, 00755);
   else
     _fd = ::open(_path.c_str(), O_RDONLY);
-  //log.print(DEBUG, "create fd from file: " + std::to_string(_fd) + " of " + _path, GREEN, true);
   return _fd > 0;
 }
 
 void File::close() {
   if (_fd <= 0)
     return ;
-
   ::close(_fd);
   _fd = 0;
 }
@@ -83,14 +80,10 @@ std::string File::getContent(){
   while((ret = read(_fd, buf, 4096))!=0)
   {
       if (ret == -1) 
-      {
-        //log.print(DEBUG, "read: " +std::string(strerror(errno)), RED,true);
         return "";
-      }
       buf[ret] = '\0';
       final.insert(final.length(),buf, ret);
   }
-  //std::cout << final << std::endl;
   return final;
 }
 
@@ -102,7 +95,7 @@ std::string &File::getPath(){
 //return file descriptir fd of file
 int &File::getFd(){
   return _fd;
-};
+}
 
 std::string File::last_modified() {
   struct stat statbuf;

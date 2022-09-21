@@ -14,20 +14,29 @@
 Logger log;
 Error_page err_page;
 
-pthread_mutex_t g_write;   //mutex to write in screen
+pthread_mutex_t g_write;  
 
 //Structure for passing arguments to threads
 struct Server {
     int         _id;
     Config      _conf;
+    std::map< int, std::map < std::string, Config > > _mycluster;
+    pthread_t   _thr;
+};
+
+//Structure for passing arguments to threads
+struct S_Ports {
+    int         _port;
+    std::map < std::string, Config > _myconfigs;
     pthread_t   _thr;
 };
 
 std::vector<Server> g_servers;
+std::vector<S_Ports> g_ports;
 
-void *start_server(void *arg)
+void *start_ports(void *arg)
 {
-    SimpleServer myserver(AF_INET, SOCK_STREAM, IPPROTO_TCP,  ((Server*)arg)->_conf, INADDR_ANY);
+    SimpleServer myserver(AF_INET, SOCK_STREAM, IPPROTO_TCP, ((S_Ports*)arg)->_port, ((S_Ports*)arg)->_myconfigs, INADDR_ANY);
     return NULL;
 }
 
@@ -66,25 +75,35 @@ int main(int argc, char **argv)
     while (c < my_cluster.get_nb_servers())
     {   
         log.print(INFO,"Configuracion del Servidor: " + std::to_string(c),GREEN,true);
-        my_cluster.show_config_one(c);
+        //my_cluster.show_config_one(c);
         c++;
     }
     log.print(INFO," [Config file load from: " + myoptions.get_path() + "]",GREEN,true);
+
+    my_cluster.load_cluster();
+   
     if (myoptions.get_test())
         exit(0);  
-    
+
     log.print(INFO,"Starting Servers",GREEN,true);
-    g_servers.resize(my_cluster.get_nb_servers());                              // resize to the number of servers
-    for (int i = 0; i < my_cluster.get_nb_servers(); i++)
+    
+    g_servers.resize(my_cluster.get_nb_servers());
+    g_ports.resize(my_cluster._cluster.size());
+    log.print(INFO,"Number of ports: " + std::to_string(my_cluster._cluster.size()),GREEN,true);
+    int i = 0;
+    for (std::map< int, std::map < std::string, Config > >::iterator it=my_cluster._cluster.begin(); it!=my_cluster._cluster.end(); ++it)
     {
-        g_servers[i]._id = i;                                                   // pass the number of the server
-        g_servers[i]._conf = my_cluster.get_server(i);                          //
-        pthread_create(&g_servers[i]._thr,NULL, start_server ,&g_servers[i]);
+        g_ports[i]._port = it->first;                                            
+        g_ports[i]._myconfigs = it->second;                      
+        pthread_create(&g_ports[i]._thr,NULL, start_ports ,&g_ports[i]);
         usleep(500);
+        i++;
     }
-    for (int i = 0; i < my_cluster.get_nb_servers(); i++)
+    i = 0;
+    for (std::map< int, std::map < std::string, Config > >::iterator it=my_cluster._cluster.begin(); it!=my_cluster._cluster.end(); ++it)
     {
-        pthread_join(g_servers[i]._thr,NULL);
+        pthread_join(g_ports[i]._thr,NULL);
+        i++;
     }
     pthread_mutex_destroy(&g_write);
     std::cout << "Stopping Servers" << std::endl;

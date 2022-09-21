@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <iostream>
-
+extern Logger log;
 //Default constructor
 SimpleSocket::SimpleSocket(int domain, int service, int protocol)
 {
@@ -38,10 +38,9 @@ void SimpleSocket::test_socket(int item_to_test)
     //Confirm that te socket or connection has been properly established
     if (item_to_test < 0)
     {
-        perror("Failed to create socket");
+        
+        log.print(INFO,"Failed to create socket",RED,true);
         exit(EXIT_FAILURE);
-    } else {
-        //std::cout << "socket() " << item_to_test << " is OK!" << std::endl;
     }
 }
 
@@ -49,7 +48,7 @@ void SimpleSocket::setNonBlockingFD(int socketfd) {
     int status = fcntl(socketfd, F_SETFL, O_NONBLOCK);
     if (status < 0)
     {
-        perror("fcntl failed");
+        log.print(INFO,"fcntl failed",RED,true);
         exit(EXIT_FAILURE);
     }
 }

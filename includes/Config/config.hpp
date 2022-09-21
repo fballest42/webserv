@@ -49,6 +49,7 @@ class Config
         int get_nb(void){return _nb;};
         long get_client_max_body_size(void){return _client_max_body_size;};
         std::vector<int>  get_ports(void){return _ports;};
+        std::vector<std::string>  get_server_names(void){return _server_names;};
         int parse(void);
         bool check_location(std::map<std::string, std::vector<std::string> >  locations);
         void show_config();

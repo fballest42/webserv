@@ -33,20 +33,22 @@ struct Server_port {
     {
         private:
             std::vector<Server_port>    _server_port; 
-            int         _port;
+            int                 _port;
             u_long              _interface;
             struct sockaddr_in  _address;
             int                 _addresslen;
             int                 _server_socket;
             int                 _backlog;           //maximun of number of pending connetions before are refused
             int                 _listening;
-            //char                _buffer[1000]; 
             int                 _epfd; 
             Config              _config;
+            std::map < std::string, Config > _myconfig;
        public:
             // Constructor
-            SimpleServer(int domain, int service, int protocol, Config mconfig, u_long interface);           
-            void test_binding(int item_to_test);
+            SimpleServer(int domain, int service, int protocol, int port, std::map < std::string, Config > mconfig, u_long interface);         
+            
+            void server_port_launch(void);
+           void test_binding(int item_to_test);
             void test_listening(int item_to_test);
             void setNonBlockingFD(int fd);
             //getter
@@ -55,5 +57,4 @@ struct Server_port {
             int get_listener(){return (_listening);};
             int get_socket(){return (_server_socket);};
     };
-//}
 #endif

@@ -40,6 +40,7 @@ void Config::set_Config(std::vector<std::string> vector_cfg, int nb)
     _vector_cfg = vector_cfg;
     _nb = nb;
 }
+
 //getters
 std::string Config::get_root(void)
 { return (_root); }
@@ -63,7 +64,7 @@ bool Config::check_location(std::map<std::string, std::vector<std::string> >  lo
         std::vector<std::string> vector_cfg = it->second;
         while(c < vector_cfg.size())
         {
-            token = get_token(vector_cfg.at(c), ' ', 0); //first token
+            token = get_token(vector_cfg.at(c), ' ', 0); 
             n_tokens = nb_tokens(vector_cfg.at(c), ' ');
             is_valid = false;
             if (token == "cgi" && n_tokens == 3)   //defines files that will be executed for given extension "cgi .sh sh;
@@ -159,6 +160,7 @@ bool Config::check_location(std::map<std::string, std::vector<std::string> >  lo
     
     return true;
 }
+
 // si correcto true else false
 int Config::parse(void)
 {
@@ -175,14 +177,12 @@ int Config::parse(void)
 
     while(c < _vector_cfg.size())
     {
-        token = get_token(_vector_cfg.at(c), ' ', 0); //first token
+        token = get_token(_vector_cfg.at(c), ' ', 0); 
         n_tokens = nb_tokens(_vector_cfg.at(c), ' ');
         is_valid = false;
-        if (token == "listen" && n_tokens == 2)   //check number of tokens pendiente
+        if (token == "listen" && n_tokens == 2)  
             {
                 std::string new_token = get_token(_vector_cfg.at(c), ' ', 2);
-                // AQUI HABRÍA QUE CHECKEAR QUE EL PUERTO NO EXISTE EN OTRO SERVIDOR, 
-                // EN CASO DE EXISTIR SE DEBE GENERAR UN SERVIDOR VIRTUAL DEL YA EXISTENTE.
                 if ((nb_tokens(new_token, ':') == 2))
                 {
                     std::string new_port = get_token(new_token, ':', 2);
@@ -209,7 +209,7 @@ int Config::parse(void)
             _cgi[get_token(_vector_cfg.at(c), ' ', 1)] = get_token(_vector_cfg.at(c), ' ', 2);
             is_valid = true;
         }  
-        if (token == "cgi-bin" && n_tokens == 2)   //(default ./cgi-bin)    //define a folder where to search CGI binaries "cgi_bin folder_path;
+        if (token == "cgi-bin" && n_tokens == 2)  //define a folder where to search CGI binaries "cgi_bin folder_path;
         {   
             _cgi_bin = get_token(_vector_cfg.at(c), ' ', 2);
             n_cgi_bin ++;
@@ -223,7 +223,7 @@ int Config::parse(void)
                 is_valid = true;
             }
         }
-        if (token == "error_page" && n_tokens == 3)   //check number of tokens pendiente
+        if (token == "error_page" && n_tokens == 3)   
             {
                 if (!is_number(get_token(_vector_cfg.at(c), ' ', 1)))
                 {
@@ -233,7 +233,7 @@ int Config::parse(void)
                 _error_pages[stoi(get_token(_vector_cfg.at(c), ' ', 1))] = get_token(_vector_cfg.at(c), ' ', 2);
                 is_valid = true;
             }   
-        if (token == "root") //&& n_tokens == 2)   //check number of tokens pendiente
+        if (token == "root") //&& n_tokens == 2)  
             {
                 if   (n_tokens > 2)        
                 {
@@ -244,7 +244,7 @@ int Config::parse(void)
                 root_exits = true;
                 is_valid = true;
             }
-        if (token == "server_name" )   //check number of tokens pendiente
+        if (token == "server_name" )  
             {
                 int cont = 1;
                 while (cont < nb_tokens(_vector_cfg.at(c), ' '))
@@ -253,11 +253,9 @@ int Config::parse(void)
                 }
                 is_valid = true;
             } 
-        if (token == "index" && n_tokens == 2)   //check number of tokens pendiente
+        if (token == "index" && n_tokens == 2)   
             {   
                 int cont = 1;
-                //std::cout << " => " << nb_tokens(_vector_cfg.at(c)," ") << '\n';
-                //_index = get_token(_vector_cfg.at(c), " ", 1);
                 while (cont < nb_tokens(_vector_cfg.at(c),' '))
                 {   
                     _index.push_back(get_token(_vector_cfg.at(c), ' ', cont));
@@ -265,18 +263,16 @@ int Config::parse(void)
                 }
                 is_valid = true;
             }
-        if (token == "autoindex" && n_tokens == 2)   //check number of tokens pendiente
+        if (token == "autoindex" && n_tokens == 2)  
             {            
                 if   (n_tokens > 2)        
                 {
                     log.print(INFO," [ERROR: Config file: double value in 'autoindex' directive]",RED,true);
-                    //throw WebServer_Exception("double value in 'autoindex' directive");
                     return(false);
                 }
                 if (get_token(_vector_cfg.at(c), ' ', 1) != "on" && get_token(_vector_cfg.at(c), ' ', 1) != "off")
                 {
                     log.print(INFO," [ERROR: Config file: unknown value in 'autoindex' directive]",RED,true);
-                    //throw WebServer_Exception("unknown value in 'autoindex' directive");
                     return(false);
                 }
                 _autoindex = get_token(_vector_cfg.at(c), ' ', 1);
@@ -287,7 +283,6 @@ int Config::parse(void)
                 if   (n_tokens > 2)      
                 {
                     log.print(INFO," [ERROR: Config file: double value in 'upload' directive]",RED,true);
-                    //throw WebServer_Exception("double value in 'upload' directive");
                     return(false);
                 }
                 _upload  = get_token(_vector_cfg.at(c), ' ', 1);
@@ -302,7 +297,6 @@ int Config::parse(void)
                 if   (n_tokens > 2) 
                 {
                     log.print(INFO," [ERROR: Config file: double value in 'client_max_body_size' directive]",RED,true);
-                    //throw WebServer_Exception("double value in 'client_max_body_size' directive");
                     return(false);
                 }
                 if (!is_number(get_token(_vector_cfg.at(c), ' ', 1)))
@@ -323,7 +317,7 @@ int Config::parse(void)
                 }
                 is_valid = true;
             }
-        if ((token == "location" && n_tokens == 3))   // PUT // AT THE END A BEGINING check number of tokens pendiente
+        if ((token == "location" && n_tokens == 3))   
         {
            if (get_token(_vector_cfg.at(c), ' ', 1) == "/")
                 location = "/";
@@ -334,7 +328,7 @@ int Config::parse(void)
                     loc.pop_back();
                 location = loc;
             }
-           c ++;
+           c++;
            //carga data de location
            while (1)
            {
@@ -360,20 +354,9 @@ int Config::parse(void)
     if (!check_location(_locations))
         return false;
 
-
-    /// MUST DEFINE ROOT ???????
-    // if (!root_exits){
-    //      log.print(INFO," [ERROR: Config file: no root found]",RED,true);
-    //      return(false);
-    // }
-
-    /// DEFAULT VALUE OF INDEX FILE COULD BE SEVERAL
- 
     //// SETTING DEFAULT VALUES 
     if (_ports.empty())
         _ports.push_back(80);   // puerto 80 default
-    // if (_cgi_bin.empty())
-    //     _cgi_bin = "/cgi-bin/";
     if (_limits_except.empty()){
         _limits_except.push_back("POST");
         _limits_except.push_back("DELETE");
@@ -381,6 +364,8 @@ int Config::parse(void)
     }
     if (_index.empty())
         _index.push_back("index.html");
+    if (_server_names.empty())
+        _server_names.push_back("localhost");    
     if (!size)
         _client_max_body_size=30000000000; //NGINX dfault size?
     return(true);
@@ -391,7 +376,7 @@ void Config::show_config(void)
     int c = 0;
     while(c<_vector_cfg.size())
     {
-        std::cout << _vector_cfg.at(c) << std::endl; //<< " numbr of tokens: " << nb_tokens(_vector_cfg.at(c)," ") << std::endl;
+        std::cout << _vector_cfg.at(c) << std::endl; 
         c++;
     }
     return;
@@ -423,8 +408,6 @@ void Config::show_cgi_bin(void)
 {
     std::cout << "--- CGI_BIN ---" << std::endl;
     std::cout << _cgi_bin << std::endl;
-    //for (std::map<std::string, std::string>::iterator it=_cgi_bin.begin(); it!=_cgi_bin.end(); ++it)
-    //    std::cout << it->first << " => " << it->second << '\n';
     return;
 }
 
@@ -438,8 +421,6 @@ void Config::show_error_pages(void)
 
 void Config::show_roots(void)
 {
-    //std::cout <<  " => " << _roots.size() << '\n';
-    //exit(1);
      std::cout << "--- ROOT ---" << std::endl;
 
         std::cout << _root << '\n';
@@ -448,8 +429,6 @@ void Config::show_roots(void)
 
 void Config::show_index(void)
 {
-    //std::cout <<  " => " << _roots.size() << '\n';
-    //exit(1);
      std::cout << "--- INDEX ---" << std::endl;
     int c = 0;
     while (c < _index.size())
@@ -462,8 +441,6 @@ void Config::show_index(void)
 
 void Config::show_autoindex(void)
 {
-    //std::cout <<  " => " << _roots.size() << '\n';
-    //exit(1);
      std::cout << "--- AUTOINDEX ---" << std::endl;
      std::cout << _autoindex << '\n';
     return;
@@ -472,8 +449,6 @@ void Config::show_autoindex(void)
 void Config::show_server_names(void)
 {
      std::cout << "--- SERVER_NAMES ---" << std::endl;
-    //std::cout <<  " => " << _roots.size() << '\n';
-    //exit(1);
     int c = 0;
     while (c < _server_names.size())
     {
@@ -486,8 +461,6 @@ void Config::show_server_names(void)
 void Config::show_limit_except(void)
 {
      std::cout << "--- LIMIT_EXCEPT ---" << std::endl;
-    //std::cout <<  " => " << _roots.size() << '\n';
-    //exit(1);
     int c = 0;
     
     while (c < _limits_except.size())
@@ -503,7 +476,6 @@ void Config::show_locations(void)
 {
      std::cout << "--- LOCATIONS ---" << std::endl;
     std::cout <<  " number => " << _locations.size() << '\n';
-    //exit(1);
     if (_locations.size() > 0){
         for (std::map<std::string, std::vector<std::string> >::iterator it = _locations.begin(); it!=_locations.end();++it)
         {

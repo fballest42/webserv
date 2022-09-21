@@ -74,11 +74,11 @@ Error_page::Error_page()
     _error_pages[511] = "Network Authentication Requiered";
     _error_pages[599] = "Network Connect Timeout Error";
     _error_pages[999] = "Unidentify error";
-};
+}
 
 Error_page::~Error_page()
 {
-};
+}
 
 std::string Error_page::get_error_page(int error_type){
     
@@ -97,7 +97,7 @@ std::string Error_page::get_error_page(int error_type){
     m_body += "</html>";
     log.print(INFO,"Error page create: " + std::to_string(error_type) + " " + _error_pages[error_type],RED,true);
     return m_body;
-};
+}
 
 std::string Error_page::get_error_description(int error_type)
 {

@@ -1,7 +1,6 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
-//https://github.com/sqatim/WebServer_42/blob/main/Server/headers/Response.class.hpp
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
@@ -34,8 +33,6 @@ class Response
     private:
         std::string _version;
         int         _contentLength;
-        //std::string _charset;
-        //std::string _location;
         std::string _date;
         Request     _request;
         int         _stat;                      //status from request error 

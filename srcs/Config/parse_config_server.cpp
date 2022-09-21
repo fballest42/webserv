@@ -41,7 +41,7 @@ bool Parse_config::parse(void)
       std::string s(line);
       stripTab(s, s_outm);
       strip(s_outm, s_out);                              //delete spaces not necesary
-      if (!s_out.empty() && s_out.at(0) != '#')     //not empty lines and comment
+      if (!s_out.empty() && s_out.at(0) != '#')         //not empty lines and comment
       {              
             is_valid = false;
             if (get_token(s_out,' ',0)=="workers")
@@ -88,7 +88,7 @@ bool Parse_config::parse(void)
                 is_valid = true;
             }
             
-            if (is_valid == false) // && is_server == false) 
+            if (is_valid == false)
             {
                 log.print(INFO," [ERROR: Config file: directive not valid]",RED,true);
                 return(false);
@@ -131,6 +131,34 @@ bool Parse_config::parse(void)
     }
     return true;
 }
+
+void Parse_config::load_cluster()
+{
+    std::map < std::string, Config > tmp_map;
+
+    for (std::vector<Config>::iterator it_cluster = _configuration.begin() ; it_cluster != _configuration.end(); ++it_cluster)
+    {
+        tmp_map.clear();
+        int c = 0;
+        while(c < it_cluster->get_ports().size())
+        {
+            int d = 0;
+            while(d < it_cluster->get_server_names().size())
+            {
+                tmp_map[it_cluster->get_server_names().at(d)] = *it_cluster; 
+                //check if port exist
+                if (_cluster.find(it_cluster->get_ports().at(c)) == _cluster.end()) // || _request_headers["host"].empty())
+                    _cluster[it_cluster->get_ports().at(c)] = tmp_map;
+                else 
+                    _cluster[it_cluster->get_ports().at(c)].insert( std::pair<std::string, Config>(it_cluster->get_server_names().at(d), *it_cluster));
+                d++;
+            }
+            c++;
+        }
+    }
+}
+
+
 
 void Parse_config::show_config(void)
 {

@@ -25,17 +25,17 @@ OBJS				= ${SRCS:.cpp=.o}
 
 INCLUDES		= -I includes/Config -I includes/Utils -I includes/HTTP
 
-CC					= clang++
-CFLAGS 				= -std=c++98 -pthread -fsanitize=address -g3
+CXX					= clang++
+CXXFLAGS 				= -std=c++98 -pedantic-errors -pthread -fsanitize=address -g3
 RM					= rm -f
 
 all:				$(NAME)
 
 $(NAME):		$(OBJS)
-						$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
+						$(CXX) $(CXXFLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
 
 %.o: %.cpp
-						${CC} ${CFLAGS} $(INCLUDES) -o $@ -c $<
+						${CXX} ${CXXFLAGS} $(INCLUDES) -o $@ -c $<
 
 clean:
 						${RM} ${OBJS}
