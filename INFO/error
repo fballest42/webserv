@@ -1,4 +1,0 @@
-return 400;               //Bad request
-return 403;               //Falla de archivo o permiso de acceso
-return 414;               //The requested URL's lengthexceeds the capacity limit for this server
-return 505;               //HTTP Version Not Supported
